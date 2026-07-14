@@ -260,14 +260,40 @@ const places = {
   Supertree: [103.8636, 1.2816],
 } as const;
 
-const mapRoutes: Array<Array<keyof typeof places>> = [
-  ["Airport", "Hotel", "MBS", "F1 Pit", "Hotel"],
-  ["Hotel", "F1 Expo", "Hotel", "Stadium", "Hotel"],
-  ["Hotel", "Oceanarium", "Orchard", "Clarke Quay", "Hotel", "Supertree", "Hotel", "Airport"],
-  ["Airport"],
+type PlaceName = keyof typeof places;
+type RouteStop = { place: PlaceName; label: string; note: string; leg?: string; optional?: boolean };
+
+const mapRoutes: RouteStop[][] = [
+  [
+    { place: "Airport", label: "樟宜机场", note: "入境、取行李后先快速游览星耀樟宜。" },
+    { place: "Hotel", label: "滨海宾乐雅", note: "办理入住并确认寄存、延迟退房和升房需求。", leg: "地铁约60–70分钟" },
+    { place: "MBS", label: "滨海湾金沙", note: "在Event Plaza观看Spectra水舞灯光秀。", leg: "地铁＋步行约15–20分钟" },
+    { place: "F1 Pit", label: "F1赛道外围", note: "沿双螺旋桥、摩天轮方向完成夜走。", leg: "步行约35分钟到赛道外围" },
+    { place: "Hotel", label: "返回酒店", note: "沿Raffles Boulevard返回酒店休息。", leg: "步行约15分钟" },
+  ],
+  [
+    { place: "Hotel", label: "酒店出发", note: "早餐后从Promenade站前往展览。" },
+    { place: "F1 Expo", label: "F1官方展览", note: "11:00入场，预计参观约1.5小时。", leg: "地铁＋步行约30–40分钟" },
+    { place: "Hotel", label: "酒店午休", note: "午餐、洗澡、充电，为演唱会保存体力。", leg: "地铁约30–40分钟" },
+    { place: "Stadium", label: "国家体育场", note: "先在Kallang Wave Mall吃饭，再按Gate进场。", leg: "地铁约20–30分钟" },
+    { place: "Hotel", label: "散场返回酒店", note: "演唱会结束后直接回酒店，不追加夜游。", leg: "地铁＋散场排队约40–60分钟" },
+  ],
+  [
+    { place: "Hotel", label: "酒店退房", note: "09:00退房并把行李寄存在礼宾部。" },
+    { place: "Oceanarium", label: "海洋生态馆", note: "10:00入场，按馆内单向路线参观。", leg: "地铁＋圣淘沙捷运约55–65分钟" },
+    { place: "Orchard", label: "乌节路", note: "重点逛ION Orchard、Ngee Ann City和Takashimaya。", leg: "地铁约30–35分钟" },
+    { place: "Clarke Quay", label: "克拉码头", note: "只在准点、天气好且有体力时前往。", leg: "地铁约25分钟", optional: true },
+    { place: "Hotel", label: "酒店取行李", note: "返回礼宾部取行李，检查护照和随身物品。", leg: "地铁约25–30分钟" },
+    { place: "Supertree", label: "超级树", note: "19:30前到场，观看19:45 Garden Rhapsody。", leg: "地铁＋步行约25–35分钟" },
+    { place: "Hotel", label: "再次返回酒店", note: "灯光秀结束后立刻取齐行李，20:45硬截止。", leg: "地铁＋步行约30–40分钟" },
+    { place: "Airport", label: "樟宜机场T3", note: "先逛Jewel，再提前值机并进入T3休息室。", leg: "地铁约60–70分钟" },
+  ],
+  [
+    { place: "Airport", label: "樟宜机场T3", note: "05:15起床，06:15离开休息室，06:45前到登机口。" },
+  ],
 ];
 
-function RouteCanvas({ active }: { active: number }) {
+function RouteCanvas({ active, activeStep, completed }: { active: number; activeStep: number; completed: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -306,7 +332,7 @@ function RouteCanvas({ active }: { active: number }) {
         y: 20 + (1 - (lat - 1.245) / 0.14) * (h - 40),
       });
       const route = mapRoutes[active];
-      const points = route.map((name) => ({ name, ...project(places[name]) }));
+      const points = route.map((stop) => ({ ...stop, ...project(places[stop.place]) }));
       const progress = Math.min(frame / 75, 1);
 
       ctx.beginPath();
@@ -328,7 +354,16 @@ function RouteCanvas({ active }: { active: number }) {
       ctx.stroke();
       ctx.restore();
 
-      const unique = Array.from(new Map(points.map((point) => [point.name, point])).values());
+      if (completed > 1) {
+        ctx.beginPath();
+        points.slice(0, completed).forEach((p, index) => index === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+        ctx.strokeStyle = "rgba(240,216,135,.85)";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([]);
+        ctx.stroke();
+      }
+
+      const unique = Array.from(new Map(points.map((point) => [point.place, point])).values());
       const labelOffset: Record<string, { dx: number; dy: number; align?: CanvasTextAlign }> = {
         Airport: { dx: -10, dy: -10, align: "right" },
         Hotel: { dx: -9, dy: -12, align: "right" },
@@ -349,28 +384,46 @@ function RouteCanvas({ active }: { active: number }) {
         ctx.fill();
         ctx.beginPath();
         ctx.arc(p.x, p.y, 3.4, 0, Math.PI * 2);
-        ctx.fillStyle = "#f0d887";
+        const lastIndex = points.map((point) => point.place).lastIndexOf(p.place);
+        ctx.fillStyle = lastIndex < completed ? "#f0d887" : "#777468";
         ctx.fill();
-        const offset = labelOffset[p.name] || { dx: 8, dy: -7 };
+        const offset = labelOffset[p.place] || { dx: 8, dy: -7 };
         ctx.font = "600 9px system-ui";
         ctx.fillStyle = "rgba(255,255,255,.78)";
         ctx.textAlign = offset.align || "left";
-        ctx.fillText(p.name, p.x + offset.dx, p.y + offset.dy);
+        ctx.fillText(p.place, p.x + offset.dx, p.y + offset.dy);
         ctx.textAlign = "left";
       });
+
+      const current = points[activeStep];
+      if (current) {
+        const ring = 11 + Math.sin(frame / 10) * 2;
+        ctx.beginPath();
+        ctx.arc(current.x, current.y, ring, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(240,216,135,.9)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(current.x, current.y, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff3bd";
+        ctx.fill();
+      }
 
       frame += 1;
       raf = requestAnimationFrame(draw);
     };
     draw();
     return () => cancelAnimationFrame(raf);
-  }, [active]);
+  }, [active, activeStep, completed]);
 
   return <canvas className="route-canvas" ref={canvasRef} aria-label={`第${active + 1}天离线路线示意图`} />;
 }
 
 export default function Home() {
   const [activeMap, setActiveMap] = useState(0);
+  const [activeRouteStep, setActiveRouteStep] = useState(0);
+  const [routeProgress, setRouteProgress] = useState<number[]>(mapRoutes.map(() => 0));
+  const [mapMode, setMapMode] = useState<"offline" | "real">("offline");
   const [done, setDone] = useState<string[]>([]);
   const [online, setOnline] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -380,6 +433,15 @@ export default function Home() {
   useEffect(() => {
     const stored = localStorage.getItem("sg26-purchases");
     if (stored) setDone(JSON.parse(stored));
+    const storedRouteProgress = localStorage.getItem("sg26-route-progress");
+    if (storedRouteProgress) {
+      try {
+        const parsed = JSON.parse(storedRouteProgress) as number[];
+        const normalized = mapRoutes.map((route, index) => Math.min(Math.max(parsed[index] || 0, 0), route.length));
+        setRouteProgress(normalized);
+        setActiveRouteStep(Math.min(normalized[0], mapRoutes[0].length - 1));
+      } catch { localStorage.removeItem("sg26-route-progress"); }
+    }
     setOnline(navigator.onLine);
     const onlineHandler = () => setOnline(navigator.onLine);
     const promptHandler = (event: Event) => { event.preventDefault(); setInstallPrompt(event); };
@@ -419,7 +481,30 @@ export default function Home() {
     document.getElementById("offline-guide")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const activeRouteNames = useMemo(() => Array.from(new Set(mapRoutes[activeMap])), [activeMap]);
+  const activeRoute = mapRoutes[activeMap];
+  const currentStop = activeRoute[activeRouteStep];
+  const completedStops = routeProgress[activeMap] || 0;
+  const currentCoordinates = places[currentStop.place];
+  const realMapUrl = useMemo(() => {
+    const [lon, lat] = currentCoordinates;
+    const bbox = [lon - .018, lat - .012, lon + .018, lat + .012].join(",");
+    return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${encodeURIComponent(`${lat},${lon}`)}`;
+  }, [currentCoordinates]);
+
+  const selectMapDay = (index: number) => {
+    setActiveMap(index);
+    setActiveRouteStep(Math.min(routeProgress[index] || 0, mapRoutes[index].length - 1));
+  };
+
+  const toggleRouteComplete = () => {
+    const alreadyCompleted = activeRouteStep < completedStops;
+    const nextProgress = routeProgress.map((value, index) => index === activeMap
+      ? (alreadyCompleted ? activeRouteStep : Math.max(value, activeRouteStep + 1))
+      : value);
+    setRouteProgress(nextProgress);
+    localStorage.setItem("sg26-route-progress", JSON.stringify(nextProgress));
+    if (!alreadyCompleted && activeRouteStep < activeRoute.length - 1) setActiveRouteStep(activeRouteStep + 1);
+  };
 
   return (
     <main>
@@ -507,16 +592,55 @@ export default function Home() {
         <div className="section-heading"><p>OFFLINE ROUTE ATLAS</p><h2>离线路线地图</h2></div>
         <div className="map-shell">
           <div className="map-toolbar">
-            {days.map((day, index) => <button key={day.id} className={activeMap === index ? "active" : ""} onClick={() => setActiveMap(index)}><span>{day.date}</span>{day.label}</button>)}
+            {days.map((day, index) => <button key={day.id} className={activeMap === index ? "active" : ""} onClick={() => selectMapDay(index)}><span>{day.date}</span>{day.label}</button>)}
           </div>
-          <div className="map-canvas-wrap">
-            <RouteCanvas active={activeMap} />
-            <div className="map-stamp"><span>ROUTE</span><strong>0{activeMap + 1}</strong></div>
+          <div className="map-mode-switch" role="group" aria-label="地图显示模式">
+            <button className={mapMode === "offline" ? "active" : ""} onClick={() => setMapMode("offline")}><span>◇</span>离线示意图</button>
+            <button className={mapMode === "real" ? "active" : ""} onClick={() => setMapMode("real")}><span>◎</span>真实地图</button>
           </div>
-          <div className="route-legend">
-            {activeRouteNames.map((name, index) => <div key={name}><span>{String(index + 1).padStart(2, "0")}</span><b>{name}</b></div>)}
+          {mapMode === "offline" ? (
+            <div className="map-canvas-wrap">
+              <RouteCanvas active={activeMap} activeStep={activeRouteStep} completed={completedStops} />
+              <div className="map-stamp"><span>ROUTE</span><strong>0{activeMap + 1}</strong></div>
+            </div>
+          ) : (
+            <div className="real-map-wrap">
+              {online ? <iframe title={`${currentStop.label}真实地图`} src={realMapUrl} loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div className="map-offline-state"><b>现在处于离线状态</b><span>切回离线示意图仍可继续使用当天执行模式。</span></div>}
+              <div className="real-map-label"><span>当前地点</span><strong>{currentStop.label}</strong></div>
+            </div>
+          )}
+          <div className="route-legend" aria-label="当天路线站点">
+            {activeRoute.map((stop, index) => (
+              <button key={`${stop.place}-${index}`} className={`${index === activeRouteStep ? "active" : ""} ${index < completedStops ? "completed" : ""}`} onClick={() => setActiveRouteStep(index)}>
+                <span>{index < completedStops ? "✓" : String(index + 1).padStart(2, "0")}</span><b>{stop.label}</b>{stop.optional && <em>可选</em>}
+              </button>
+            ))}
           </div>
-          <p className="map-caption">地图按真实地理相对位置绘制，可离线查看；精确站口和临时封路仍以当天Google Maps、MyTransport.SG及现场标识为准。</p>
+          <div className="route-executor">
+            <div className="executor-head">
+              <div><span>DAY {String(activeMap + 1).padStart(2, "0")} · NOW</span><h3>{currentStop.label}{currentStop.optional && <em>有精力再去</em>}</h3></div>
+              <b>{completedStops}/{activeRoute.length}</b>
+            </div>
+            <div className="executor-progress"><span style={{ width: `${(completedStops / activeRoute.length) * 100}%` }} /></div>
+            {currentStop.leg && <p className="executor-leg">从上一站出发 · {currentStop.leg}</p>}
+            <p>{currentStop.note}</p>
+            <div className="executor-neighbours">
+              <span>上一站<b>{activeRouteStep > 0 ? activeRoute[activeRouteStep - 1].label : "今天起点"}</b></span>
+              <span>下一站<b>{activeRouteStep < activeRoute.length - 1 ? activeRoute[activeRouteStep + 1].label : "当天结束"}</b></span>
+            </div>
+            <div className="executor-actions">
+              <button disabled={activeRouteStep === 0} onClick={() => setActiveRouteStep(activeRouteStep - 1)}>← 上一步</button>
+              <button className="complete-stop" onClick={toggleRouteComplete}>{activeRouteStep < completedStops ? "撤销此站完成" : activeRouteStep === activeRoute.length - 1 ? "完成当天路线" : "完成并到下一站"}</button>
+              <button disabled={activeRouteStep === activeRoute.length - 1} onClick={() => setActiveRouteStep(activeRouteStep + 1)}>下一步 →</button>
+            </div>
+            {mapMode === "real" && online && (
+              <div className="external-map-actions">
+                <a href={`https://www.google.com/maps/search/?api=1&query=${currentCoordinates[1]},${currentCoordinates[0]}`} target="_blank" rel="noreferrer">Google Maps 导航</a>
+                <a href={`https://maps.apple.com/?ll=${currentCoordinates[1]},${currentCoordinates[0]}&q=${encodeURIComponent(currentStop.label)}`} target="_blank" rel="noreferrer">Apple 地图导航</a>
+              </div>
+            )}
+          </div>
+          <p className="map-caption">离线示意图用于理解当天顺序；真实地图由OpenStreetMap提供。精确站口、临时封路和实时导航仍以当天地图应用及现场标识为准。</p>
         </div>
       </section>
 
@@ -537,7 +661,7 @@ export default function Home() {
             <header className="day-header">
               <div className="date-lockup"><span>{day.accent}</span><strong>{day.date}</strong></div>
               <div><h3>{day.label}</h3><p>{day.summary}</p></div>
-              <button onClick={() => { setActiveMap(dayIndex); document.getElementById("map")?.scrollIntoView({ behavior: "smooth" }); }}>地图定位</button>
+              <button onClick={() => { selectMapDay(dayIndex); document.getElementById("map")?.scrollIntoView({ behavior: "smooth" }); }}>地图定位</button>
             </header>
             <div className="timeline">
               {day.items.map((item, index) => (
