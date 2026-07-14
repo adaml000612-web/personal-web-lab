@@ -1,4 +1,4 @@
-const CACHE = "sg26-offline-v4";
+const CACHE = "sg26-offline-v5";
 const CORE = ["/", "/manifest.webmanifest", "/favicon.svg"];
 
 self.addEventListener("install", (event) => {

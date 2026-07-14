@@ -178,9 +178,14 @@ h1 em { font-family: Georgia, "Times New Roman", serif; color: var(--gold-bright
 .transit-warning b { color: #e0b15e; font-size: 9px; letter-spacing: .1em; white-space: nowrap; }
 .transit-warning span { color: #a9a496; font-size: 10px; line-height: 1.6; }
 
-.rules-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.rules-grid div { min-height: 140px; border: 1px solid rgba(255,255,255,.065); border-radius: 18px; padding: 20px; background: rgba(255,255,255,.02); }
-.rules-grid span { font: 300 28px Georgia, serif; color: rgba(217,183,93,.38); }.rules-grid p { color: #a19e91; line-height: 1.65; font-size: 12px; }
+.day-rules { margin: 10px 0 0 94px; border: 1px solid rgba(217,183,93,.18); border-radius: 18px; padding: 18px 20px; background: linear-gradient(135deg, rgba(217,183,93,.075), rgba(255,255,255,.018)); }
+.day-rules-heading { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+.day-rules-heading span { color: #d9b75d; font-size: 9px; letter-spacing: .17em; }
+.day-rules-heading h4 { margin: 0; color: #f2eee3; font-size: 15px; }
+.day-rules-list { display: grid; gap: 8px; }
+.day-rules-list div { display: grid; grid-template-columns: 28px 1fr; align-items: start; gap: 9px; }
+.day-rules-list b { color: rgba(217,183,93,.55); font: 300 16px Georgia, serif; }
+.day-rules-list p { margin: 0; color: #aaa697; line-height: 1.6; font-size: 12px; }
 .offline-guide { display: flex; align-items: center; justify-content: space-between; gap: 40px; border: 1px solid var(--line); border-radius: 28px; background: linear-gradient(110deg, rgba(217,183,93,.13), rgba(217,183,93,.02)); margin-bottom: 100px; padding: 48px; }
 .offline-guide h2 { font: 400 clamp(34px, 5vw, 62px) Georgia, serif; margin: 8px 0 14px; }.offline-guide p:not(.gold-label) { color: #9f9b8e; max-width: 700px; line-height: 1.7; }
 
@@ -203,7 +208,7 @@ footer p { margin: 10px 0 0; color: #aaa79a; } footer small { font-size: 10px; }
   .timeline { padding: 12px 0 0; }.timeline-item { grid-template-columns: 70px minmax(0, 1fr); }.timeline-item::before { left: 58px; }.time i { right: 3px; }.event-card { margin-left: 11px; padding: 15px 14px; }.event-title h4 { font-size: 15px; }.event-card p { margin-top: 8px; }
   .mrt-primer { display: flex; gap: 7px; overflow-x: auto; margin-right: -18px; padding-right: 18px; scrollbar-width: none; }.mrt-primer::-webkit-scrollbar { display: none; }.mrt-primer > div { flex: 0 0 auto; }.primer-note { margin-bottom: 24px; }
   .transit-guide summary { gap: 8px; padding: 8px 10px; }.guide-label { font-size: 9px; }.guide-label::before { width: 16px; height: 16px; margin-right: 5px; }.guide-preview i { max-width: 54px; padding-inline: 5px; }.transit-step { grid-template-columns: 78px minmax(0, 1fr); gap: 10px; }.transit-step:not(:last-child)::after { left: 38px; }.step-badge { padding: 6px; font-size: 8px; }.transit-warning { grid-template-columns: 1fr; gap: 4px; }
-  .rules-grid { grid-template-columns: 1fr 1fr; }.rules-grid div { min-height: 126px; }
+  .day-rules { margin-left: 76px; }
   .offline-guide { margin: 12px 18px 76px; padding: 26px 22px; display: grid; }.offline-guide h2 { font-size: 36px; }
   footer { padding-bottom: 110px; }
   .mobile-nav { position: fixed; display: grid; grid-template-columns: repeat(4, 1fr); z-index: 80; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom)); background: rgba(14,14,12,.9); border: 1px solid rgba(217,183,93,.24); backdrop-filter: blur(20px); border-radius: 20px; padding: 8px; box-shadow: 0 12px 50px #000; }
@@ -211,7 +216,7 @@ footer p { margin: 10px 0 0; color: #aaa79a; } footer small { font-size: 10px; }
 }
 
 @media (max-width: 420px) {
-  h1 { font-size: 62px; }.hero-actions { display: grid; }.rules-grid { grid-template-columns: 1fr; }.map-canvas-wrap, .route-canvas { height: 340px; min-height: 340px; }.timeline-item { grid-template-columns: 62px 1fr; }.timeline-item::before { left: 50px; }.time span { font-size: 11px; }
+  h1 { font-size: 62px; }.hero-actions { display: grid; }.map-canvas-wrap, .route-canvas { height: 340px; min-height: 340px; }.timeline-item { grid-template-columns: 62px 1fr; }.timeline-item::before { left: 50px; }.time span { font-size: 11px; }.day-rules { margin-left: 62px; padding: 15px; }.day-rules-heading { display: block; }.day-rules-heading span { display: block; margin-bottom: 4px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

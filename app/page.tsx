@@ -24,6 +24,7 @@ type DayPlan = {
   label: string;
   accent: string;
   summary: string;
+  rules: string[];
   items: Array<{
     time: string;
     title: string;
@@ -84,6 +85,7 @@ const days: DayPlan[] = [
     label: "抵达与滨海湾",
     accent: "FRI",
     summary: "樟宜机场 → 星耀樟宜 → 酒店 → Spectra → F1赛道夜走",
+    rules: ["错过22:00的Spectra就直接开始滨海湾与F1路线夜走，不再原地等待。"],
     items: [
       { time: "18:25", title: "SQ869 抵达新加坡", duration: "50–75分钟", note: "跟随 Arrival / Immigration，完成入境、取行李和海关。SG Arrival Card需在出发前完成。" },
       { time: "19:30", title: "星耀樟宜快速游览", duration: "约50分钟", transit: { steps: [
@@ -118,6 +120,7 @@ const days: DayPlan[] = [
     label: "F1与演唱会",
     accent: "SAT",
     summary: "F1官方展览 → 午休 → 国家体育场 → The Weeknd",
+    rules: ["演唱会散场后直接回酒店；克拉码头不放在散场后，给第二天保留体力。"],
     items: [
       { time: "08:30", title: "酒店附近早餐", duration: "约1小时", transit: { steps: [
         transitStep("walk", "步行", "优先去 Marina Square", "从酒店连通区域步行约3–8分钟；若店铺选择少，再沿室内通道前往 Suntec City。"),
@@ -155,6 +158,11 @@ const days: DayPlan[] = [
     label: "圣淘沙与机场",
     accent: "SUN",
     summary: "海洋生态馆 → 乌节路 → 克拉码头可选 → 超级树 → 樟宜T3",
+    rules: [
+      "海洋生态馆或乌节路超时，第一项取消克拉码头，不压缩后面的取行李和机场时间。",
+      "超级树因雷雨暂停就直接回酒店取行李，不等20:45的下一场。",
+      "20:45是从酒店带行李出发去机场的硬截止时间。",
+    ],
     items: [
       { time: "08:00", title: "早餐、退房、寄存行李", duration: "约1小时", note: "09:00主动退房并把箱子寄存在礼宾部，保留寄存凭证。" },
       { time: "09:00", title: "前往海洋生态馆", duration: "55–65分钟", transit: { steps: [
@@ -224,6 +232,7 @@ const days: DayPlan[] = [
     label: "返回厦门",
     accent: "MON",
     summary: "T3休息室 → 登机口 → SQ868 → 厦门",
+    rules: ["休息室最晚06:15离开，06:45前到达最终登机口区域；登机口以当天航班屏为准。"],
     items: [
       { time: "05:15", title: "起床、洗漱、早餐", duration: "约1小时", note: "检查护照、登机牌、手机和充电宝，确认最终登机口。" },
       { time: "06:15", title: "离开休息室前往登机口", duration: "10–25分钟", transit: { steps: [
@@ -561,21 +570,14 @@ export default function Home() {
                 </div>
               ))}
             </div>
+            <aside className="day-rules" aria-label={`${day.date} 当天取舍原则`}>
+              <div className="day-rules-heading"><span>DECISION RULES</span><h4>当天取舍原则</h4></div>
+              <div className="day-rules-list">
+                {day.rules.map((rule, ruleIndex) => <div key={rule}><b>{String(ruleIndex + 1).padStart(2, "0")}</b><p>{rule}</p></div>)}
+              </div>
+            </aside>
           </article>
         ))}
-      </section>
-
-      <section className="section rules" data-reveal>
-        <div className="section-number">05</div>
-        <div className="section-heading"><p>DECISION RULES</p><h2>当天取舍原则</h2></div>
-        <div className="rules-grid">
-          <div><span>01</span><p>第一晚错过22:00 Spectra，直接夜走，不再等待。</p></div>
-          <div><span>02</span><p>演唱会结束后直接回酒店，克拉码头不放在散场后。</p></div>
-          <div><span>03</span><p>海洋馆或乌节路超时，第一项取消克拉码头。</p></div>
-          <div><span>04</span><p>10月4日最晚20:45从酒店出发去机场。</p></div>
-          <div><span>05</span><p>超级树因雷雨暂停，不等下一场，直接取行李。</p></div>
-          <div><span>06</span><p>T3休息结束时间不晚于06:20，最晚06:45到登机口。</p></div>
-        </div>
       </section>
 
       <section className="section offline-guide" id="offline-guide" data-reveal>
