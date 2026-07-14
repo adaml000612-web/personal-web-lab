@@ -122,7 +122,8 @@ h1 em { font-family: Georgia, "Times New Roman", serif; color: var(--gold-bright
 .route-legend span { color: var(--gold); font: 9px monospace; }.route-legend b { font-size: 11px; color: #aaa79a; font-weight: 500; }
 .map-caption { margin: 0; padding: 14px 20px 20px; color: #68665d; font-size: 10px; }
 
-.day-block { margin-bottom: 70px; opacity: 0; transform: translateY(30px); transition: .7s ease; }
+.plan-section { opacity: 1; transform: none; }
+.day-block { margin-bottom: 70px; opacity: 1; transform: none; transition: .7s ease; }
 .day-header { display: grid; grid-template-columns: 105px 1fr auto; align-items: center; gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); border-bottom: 1px solid rgba(255,255,255,.06); }
 .date-lockup { display: grid; }.date-lockup span { color: var(--gold); font-size: 9px; letter-spacing: .2em; }.date-lockup strong { font: 300 34px Georgia, serif; }
 .day-header h3 { margin: 0 0 7px; font-size: 28px; font-weight: 400; }.day-header p { margin: 0; color: #7c796e; font-size: 12px; }

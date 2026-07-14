@@ -403,7 +403,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section plan-section" id="plan">
+      <section className="section plan-section" id="plan" data-reveal>
         <div className="section-number">04</div>
         <div className="section-heading"><p>THE JOURNEY</p><h2>逐步执行路线</h2></div>
         {days.map((day, dayIndex) => (
