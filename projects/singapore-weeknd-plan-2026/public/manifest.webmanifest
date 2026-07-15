@@ -1,0 +1,14 @@
+{
+  "name": "SG26 新加坡旅行助手",
+  "short_name": "SG26",
+  "description": "2026新加坡离线行程、购票与地铁路线",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070706",
+  "theme_color": "#070706",
+  "lang": "zh-CN",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
