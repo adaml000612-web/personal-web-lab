@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { addMovingAverages, aggregatePoints, type KlinePeriod } from "../../kline";
+import { addMovingAverages, aggregatePoints, parseNasdaqDate, type KlinePeriod } from "../../kline";
 import { parseStockSymbol, type SearchInstrument } from "../../market-symbol";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +32,7 @@ async function fetchNasdaq(instrument: SearchInstrument, period: KlinePeriod) {
     const values = [row.open, row.close, row.high, row.low, row.volume].map(number);
     if (!validPoint(values)) return [];
     return [{
-      date: row.date.split("/").reverse().join("-"),
+      date: parseNasdaqDate(row.date),
       open: values[0],
       close: values[1],
       high: values[2],

@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { addMovingAverages, aggregatePoints } from "../app/kline.ts";
+import { addMovingAverages, aggregatePoints, parseNasdaqDate } from "../app/kline.ts";
+
+test("normalizes Nasdaq dates without swapping month and day", () => {
+  assert.equal(parseNasdaqDate("07/23/2026"), "2026-07-23");
+});
 
 test("calculates MA5, MA10 and MA20 without inventing early values", () => {
   const points = Array.from({ length: 20 }, (_, index) => ({
