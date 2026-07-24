@@ -236,7 +236,7 @@ export function MarketDashboard() {
       </div>
 
       <footer>
-        <span>前哨 v0.1 · 数据可能延迟</span>
+        <span>前哨 v1.0.0 · 数据可能延迟</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>
