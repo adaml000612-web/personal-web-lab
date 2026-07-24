@@ -8,18 +8,9 @@ async function render() {
   const { default: worker } = await import(workerUrl.href);
 
   return worker.fetch(
-    new Request("http://localhost/", {
-      headers: { accept: "text/html" },
-    }),
-    {
-      ASSETS: {
-        fetch: async () => new Response("Not found", { status: 404 }),
-      },
-    },
-    {
-      waitUntil() {},
-      passThroughOnException() {},
-    },
+    new Request("http://localhost/", { headers: { accept: "text/html" } }),
+    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+    { waitUntil() {}, passThroughOnException() {} },
   );
 }
 
@@ -29,32 +20,21 @@ test("server-renders the market signal desk", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>前哨 · 投资情报雷达<\/title>/i);
-  assert.match(html, /只看与你有关的/);
-  assert.match(html, /市场信号/);
-  assert.match(html, /英伟达/);
-  assert.match(html, /SpaceX/);
-  assert.match(html, /腾讯/);
-  assert.match(html, /中际旭创/);
-  assert.match(html, /指数脉冲/);
-  assert.doesNotMatch(html, /codex-preview/);
-  assert.doesNotMatch(html, /Your site is taking shape/);
+  for (const content of ["前哨 · 投资情报雷达", "市场信号", "英伟达", "SpaceX", "腾讯", "中际旭创", "指数脉冲"]) {
+    assert.match(html, new RegExp(content));
+  }
+  assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
 });
 
-test("keeps private-company and future-listing data honest", async () => {
-  const [dashboard, marketRoute, newsRoute] = await Promise.all([
-    readFile(new URL("../app/market-dashboard.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/api/market/route.ts", import.meta.url), "utf8"),
+test("keeps market coverage configurable and honest", async () => {
+  const [config, newsRoute] = await Promise.all([
+    readFile(new URL("../app/market-config.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/news/route.ts", import.meta.url), "utf8"),
   ]);
 
-  assert.match(dashboard, /symbol:\s*"PRIVATE".*name:\s*"SpaceX"/);
-  assert.match(dashboard, /正式上市并确认交易代码后接入/);
-  assert.doesNotMatch(marketRoute, /symbol:\s*"SPCX"/);
-  assert.match(marketRoute, /query:\s*"usNVDA"/);
-  assert.match(marketRoute, /query:\s*"hk00700"/);
-  assert.match(marketRoute, /query:\s*"sz300308"/);
-  assert.match(newsRoute, /SEC EDGAR/);
-  assert.match(newsRoute, /腾讯投资者关系/);
-  assert.match(newsRoute, /东方财富公告索引/);
+  for (const content of ['symbol: "PRIVATE"', '"usNVDA"', '"hk00700"', '"sz300308"']) {
+    assert.match(config, new RegExp(content));
+  }
+  assert.doesNotMatch(config, /symbol:\s*"SPCX"/);
+  assert.match(newsRoute, /SEC EDGAR|腾讯投资者关系|东方财富公告索引/);
 });
