@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import type { KlinePeriod, KlinePoint } from "./kline";
+import { KlineChart } from "./kline-chart";
 import type { Quote } from "./market-config";
 
 const currencySymbol: Record<string, string> = { USD: "$", HKD: "HK$", CNY: "¥" };
@@ -15,6 +17,10 @@ export function BeginnerMarket({ quotes, loading }: { quotes: Quote[]; loading: 
   const [selectedId, setSelectedId] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [period, setPeriod] = useState<KlinePeriod>("day");
+  const [kline, setKline] = useState<KlinePoint[]>([]);
+  const [klineLoading, setKlineLoading] = useState(false);
+  const [klineError, setKlineError] = useState("");
 
   const stocks = useMemo(() => {
     const merged = [...searched, ...quotes.filter(({ type }) => type === "stock")];
@@ -22,6 +28,35 @@ export function BeginnerMarket({ quotes, loading }: { quotes: Quote[]; loading: 
   }, [quotes, searched]);
   const selected = stocks.find(({ id }) => id === selectedId) ?? stocks[0];
   const indices = quotes.filter(({ type }) => type === "index");
+
+  useEffect(() => {
+    if (!selected) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setKlineLoading(true);
+      setKlineError("");
+      try {
+        const response = await fetch(`/api/kline?symbol=${encodeURIComponent(selected.symbol)}&period=${period}`, {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "K 线加载失败");
+        setKline(data.points ?? []);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setKline([]);
+          setKlineError(error instanceof Error ? error.message : "K 线加载失败");
+        }
+      } finally {
+        if (!controller.signal.aborted) setKlineLoading(false);
+      }
+    }, 0);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [period, selected]);
 
   async function search(event: FormEvent) {
     event.preventDefault();
@@ -98,6 +133,19 @@ export function BeginnerMarket({ quotes, loading }: { quotes: Quote[]; loading: 
                   <div key={label as string}><span>{label}</span><strong>{number(value as number | null, prefix)}</strong><small>{help}</small></div>
                 ))}
               </div>
+              <section className="kline-section">
+                <div className="kline-heading">
+                  <div><strong>K 线与成交量</strong><small>红色收涨，绿色收跌；均线用于观察一段时间的平均价格。</small></div>
+                  <div className="period-tabs" aria-label="K 线周期">
+                    {([["day", "日 K"], ["week", "周 K"], ["month", "月 K"]] as const).map(([value, label]) => (
+                      <button className={period === value ? "is-active" : ""} onClick={() => setPeriod(value)} key={value}>{label}</button>
+                    ))}
+                  </div>
+                </div>
+                {klineLoading ? <div className="kline-loading">正在读取历史行情…</div>
+                  : klineError ? <div className="data-notice">{klineError}</div>
+                    : <KlineChart points={kline} />}
+              </section>
             </>
           ) : <div className="empty-state"><strong>行情正在连接</strong><p>如果暂时没有数据，请稍后刷新。</p></div>}
         </div>
