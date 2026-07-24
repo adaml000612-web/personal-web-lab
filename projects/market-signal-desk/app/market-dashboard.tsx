@@ -77,16 +77,9 @@ export function MarketDashboard() {
   const quoteMap = useMemo(() => new Map(quotes.map((quote) => [quote.id, quote])), [quotes]);
 
   const filteredSignals = useMemo(() => {
-    return signals.filter((signal) => {
-      const watch = watchlist.find((item) => item.id === selected);
-      const matchesActor =
-        selected === "all" ||
-        (watch &&
-          (signal.actor.includes(watch.name) ||
-            signal.title.toLowerCase().includes(watch.name.toLowerCase()) ||
-            signal.title.toLowerCase().includes(watch.symbol.toLowerCase())));
-      return matchesActor && (priority === "all" || signal.priority === priority);
-    });
+    return signals.filter((signal) =>
+      (selected === "all" || signal.targets.includes(selected)) &&
+      (priority === "all" || signal.priority === priority));
   }, [priority, selected, signals]);
 
   function toggleSaved(id: string) {
@@ -194,6 +187,7 @@ export function MarketDashboard() {
                     <div className="signal-meta">
                       <span className="actor-tag">{signal.actor}</span>
                       {signal.official && <span className="official-tag">官方披露</span>}
+                      <span className="score-tag" title={signal.factors.join(" · ")}>相关度 {signal.score}</span>
                       <span>{signal.source}</span><time>{relativeTime(signal.publishedAt)}</time>
                     </div>
                     <a href={signal.url} target="_blank" rel="noreferrer" onClick={() => openSignal(signal)}><h3>{signal.title}</h3></a>
@@ -236,7 +230,7 @@ export function MarketDashboard() {
       </div>
 
       <footer>
-        <span>前哨 v1.0.0 · 数据可能延迟</span>
+        <span>前哨 v1.1.0 · 数据可能延迟</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>
