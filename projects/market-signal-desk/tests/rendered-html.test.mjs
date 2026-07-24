@@ -20,7 +20,7 @@ test("server-renders the market signal desk", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "市场信号", "英伟达", "SpaceX", "腾讯", "中际旭创", "指数脉冲"]) {
+  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "市场信号", "英伟达", "SpaceX", "腾讯", "中际旭创", "指数脉冲", "v1.4.0"]) {
     assert.match(html, new RegExp(content));
   }
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
