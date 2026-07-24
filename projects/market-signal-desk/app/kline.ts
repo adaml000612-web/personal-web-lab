@@ -29,6 +29,11 @@ export function addMovingAverages(points: RawPoint[]): KlinePoint[] {
   }));
 }
 
+export function parseNasdaqDate(value: string) {
+  const [month, day, year] = value.split("/");
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}
+
 export function aggregatePoints(points: RawPoint[], period: Exclude<KlinePeriod, "day">) {
   const groups = new Map<string, RawPoint[]>();
   points.forEach((point) => {
