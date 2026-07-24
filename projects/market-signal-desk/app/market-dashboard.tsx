@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { BeginnerMarket } from "./beginner-market";
 import { indexOrder, sourceLinks, watchlist, type Quote, type Signal } from "./market-config";
 
 function displayNumber(value: number) {
@@ -21,6 +22,7 @@ function relativeTime(value: string) {
 }
 
 export function MarketDashboard() {
+  const [module, setModule] = useState<"signals" | "prices">("signals");
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [signals, setSignals] = useState<Signal[]>([]);
   const [unavailable, setUnavailable] = useState<string[]>([]);
@@ -71,7 +73,11 @@ export function MarketDashboard() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => void loadData(), 0);
-    return () => window.clearTimeout(timer);
+    const interval = window.setInterval(() => void loadData(), 60_000);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearInterval(interval);
+    };
   }, [loadData]);
 
   const quoteMap = useMemo(() => new Map(quotes.map((quote) => [quote.id, quote])), [quotes]);
@@ -108,16 +114,24 @@ export function MarketDashboard() {
           <span className="brand-mark" aria-hidden="true">前</span>
           <span><strong>前哨</strong><small>MARKET SIGNAL DESK</small></span>
         </a>
-        <div className="market-clock" aria-label="数据状态">
-          <span className={error ? "status-dot status-dot--warn" : "status-dot"} />
-          <span>{lastUpdated ? `更新于 ${lastUpdated.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}` : "正在连接数据源"}</span>
+        <nav className="module-nav" aria-label="应用板块">
+          <button className={module === "signals" ? "is-active" : ""} onClick={() => setModule("signals")}>情报雷达</button>
+          <button className={module === "prices" ? "is-active" : ""} onClick={() => setModule("prices")}>行情入门</button>
+        </nav>
+        <div className="top-actions">
+          <div className="market-clock" aria-label="数据状态">
+            <span className={error ? "status-dot status-dot--warn" : "status-dot"} />
+            <span>{lastUpdated ? `更新于 ${lastUpdated.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}` : "正在连接数据源"}</span>
+          </div>
+          <button className="refresh-button" onClick={() => void loadData(true)} disabled={refreshing}>
+            <span className={refreshing ? "refresh-icon spinning" : "refresh-icon"} aria-hidden="true">↻</span>
+            {refreshing ? "刷新中" : module === "prices" ? "刷新行情" : "刷新情报"}
+          </button>
         </div>
-        <button className="refresh-button" onClick={() => void loadData(true)} disabled={refreshing}>
-          <span className={refreshing ? "refresh-icon spinning" : "refresh-icon"} aria-hidden="true">↻</span>
-          {refreshing ? "扫描中" : "刷新情报"}
-        </button>
       </header>
 
+      {module === "signals" ? (
+        <>
       <section className="command-strip" id="top">
         <div>
           <p className="eyebrow">PERSONAL MARKET INTELLIGENCE</p>
@@ -228,9 +242,13 @@ export function MarketDashboard() {
           </div>
         </aside>
       </div>
+        </>
+      ) : (
+        <BeginnerMarket quotes={quotes} loading={loading} />
+      )}
 
       <footer>
-        <span>前哨 v1.1.0 · 数据可能延迟</span>
+        <span>前哨 v1.2.0 · 数据可能延迟</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>
