@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import {
   nasdaqSources,
   secCompanies,
+  topicRules,
   watchedAliases,
-  type Signal,
+  watchlist,
+  type RawSignal,
 } from "../../market-config";
+import { rankSignals } from "../../ranking";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +33,7 @@ function decodeEntities(value: string) {
     .trim();
 }
 
-function parseRss(xml: string, meta: Omit<Signal, "id" | "title" | "url" | "publishedAt">) {
+function parseRss(xml: string, meta: Omit<RawSignal, "id" | "title" | "url" | "publishedAt">) {
   return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)].slice(0, 8).flatMap((match, index) => {
     const item = match[1];
     const title = decodeEntities(item.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "");
@@ -51,17 +54,16 @@ function parseRss(xml: string, meta: Omit<Signal, "id" | "title" | "url" | "publ
 function classifyWatchedHeadline(title: string) {
   const lower = title.toLowerCase();
   const direct = watchedAliases.find(({ values }) => values.some((value) => lower.includes(value)));
-  if (direct) return { actor: direct.actor, priority: 1 as const, reason: "直接提及你的关注标的" };
-  if (/(ai|chip|semiconductor|autonomous|electric vehicle|cloud|spaceflight|rocket)/i.test(title)) {
-    return { actor: "产业链", priority: 2 as const, reason: "同板块或产业链信号" };
-  }
+  if (direct) return { actor: direct.actor, targets: [direct.id], priority: 1 as const, reason: "直接提及你的关注标的" };
+  const topic = topicRules.find(({ pattern }) => pattern.test(title));
+  if (topic) return { actor: "产业链", targets: [...topic.targets], priority: 2 as const, reason: "同板块或产业链信号" };
   if (/(nasdaq|s&p 500|stock market|index|wall street)/i.test(title)) {
-    return { actor: "指数", priority: 3 as const, reason: "关注标的所属指数信号" };
+    return { actor: "指数", targets: watchlist.map(({ id }) => id), priority: 3 as const, reason: "关注标的所属指数信号" };
   }
   return null;
 }
 
-async function fetchNasdaq(source: (typeof nasdaqSources)[number]): Promise<Signal[]> {
+async function fetchNasdaq(source: (typeof nasdaqSources)[number]): Promise<RawSignal[]> {
   const { symbol } = source;
   const isPeer = "aliases" in source;
   const response = await fetch(`https://www.nasdaq.com/feed/rssoutbound?symbol=${symbol}`, {
@@ -76,6 +78,7 @@ async function fetchNasdaq(source: (typeof nasdaqSources)[number]): Promise<Sign
     reason: isPeer ? "海外同类公司与映射市场" : "候选信号",
     actor: isPeer ? source.actor : symbol,
     official: false,
+    targets: isPeer ? [...source.targets] : [],
   });
   if (isPeer) {
     return signals.filter(({ title }) =>
@@ -87,7 +90,7 @@ async function fetchNasdaq(source: (typeof nasdaqSources)[number]): Promise<Sign
   });
 }
 
-async function fetchTencentAnnouncements(): Promise<Signal[]> {
+async function fetchTencentAnnouncements(): Promise<RawSignal[]> {
   const response = await fetch("https://www.tencent.com.cn/zh-cn/investors/announcements.html", {
     headers: { "User-Agent": "Mozilla/5.0 MarketSignalDesk/1.0" },
     cache: "no-store",
@@ -107,10 +110,11 @@ async function fetchTencentAnnouncements(): Promise<Signal[]> {
       reason: "公司官方投资者公告",
       actor: "腾讯",
       official: true,
+      targets: ["tencent"],
     }));
 }
 
-async function fetchInnolightAnnouncements(): Promise<Signal[]> {
+async function fetchInnolightAnnouncements(): Promise<RawSignal[]> {
   const params = new URLSearchParams({
     sr: "-1",
     page_size: "10",
@@ -142,12 +146,13 @@ async function fetchInnolightAnnouncements(): Promise<Signal[]> {
       reason: "中际旭创公司公告",
       actor: "中际旭创",
       official: false,
+      targets: ["innolight"],
     }];
   });
 }
 
-async function fetchSecFilings(): Promise<Signal[]> {
-  const results = await Promise.allSettled(secCompanies.map(async ({ actor, cik }) => {
+async function fetchSecFilings(): Promise<RawSignal[]> {
+  const results = await Promise.allSettled(secCompanies.map(async ({ id, actor, cik }) => {
     const response = await fetch(`https://data.sec.gov/submissions/CIK${cik}.json`, {
       headers: { "User-Agent": "MarketSignalDesk contact@example.com", Accept: "application/json" },
       cache: "no-store",
@@ -175,6 +180,7 @@ async function fetchSecFilings(): Promise<Signal[]> {
         reason: "公司官方监管披露",
         actor,
         official: true,
+        targets: [id],
       }];
     }).slice(0, 6);
   }));
@@ -189,19 +195,9 @@ export async function GET() {
     fetchSecFilings(),
   ]);
 
-  const seen = new Set<string>();
-  const signals = sources
-    .flatMap((result) => result.status === "fulfilled" ? result.value : [])
-    .filter((signal) => {
-      const key = `${signal.url}|${signal.title.toLowerCase()}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .sort((a, b) => a.priority !== b.priority
-      ? a.priority - b.priority
-      : new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-    .slice(0, 80);
+  const signals = rankSignals(
+    sources.flatMap((result) => result.status === "fulfilled" ? result.value : []),
+  ).slice(0, 80);
 
   return NextResponse.json(
     {

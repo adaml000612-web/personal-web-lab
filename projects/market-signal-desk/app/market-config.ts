@@ -22,7 +22,12 @@ export type Signal = {
   reason: string;
   actor: string;
   official: boolean;
+  targets: string[];
+  score: number;
+  factors: string[];
 };
+
+export type RawSignal = Omit<Signal, "score" | "factors">;
 
 export const watchlist = [
   { id: "nvda", symbol: "NVDA", name: "英伟达", market: "美股", tone: "blue" },
@@ -55,24 +60,33 @@ export const sourceLinks = [
 ] as const;
 
 export const watchedAliases = [
-  { actor: "英伟达", values: ["nvidia", "nvda"] },
-  { actor: "SpaceX", values: ["spacex"] },
-  { actor: "特斯拉", values: ["tesla", "tsla"] },
-  { actor: "谷歌", values: ["alphabet", "google", "googl"] },
+  { id: "nvda", actor: "英伟达", values: ["nvidia", "nvda"] },
+  { id: "spacex", actor: "SpaceX", values: ["spacex"] },
+  { id: "tsla", actor: "特斯拉", values: ["tesla", "tsla"] },
+  { id: "googl", actor: "谷歌", values: ["alphabet", "google", "googl"] },
+  { id: "tencent", actor: "腾讯", values: ["tencent"] },
+  { id: "innolight", actor: "中际旭创", values: ["innolight", "中际旭创"] },
 ];
+
+export const topicRules = [
+  { pattern: /(ai|artificial intelligence|chip|semiconductor|gpu|光模块|算力)/i, targets: ["nvda", "googl", "tencent", "innolight"] },
+  { pattern: /(autonomous|electric vehicle|ev\b|robotaxi|自动驾驶|电动车)/i, targets: ["tsla", "googl", "nvda"] },
+  { pattern: /(cloud|data center|datacenter|云计算|数据中心)/i, targets: ["googl", "tencent", "nvda", "innolight"] },
+  { pattern: /(spaceflight|rocket|launch|satellite|航天|火箭|卫星)/i, targets: ["spacex"] },
+] as const;
 
 export const nasdaqSources = [
   { symbol: "NVDA" }, { symbol: "TSLA" }, { symbol: "GOOGL" },
-  { symbol: "AMD", actor: "AMD", aliases: ["amd", "advanced micro devices"] },
-  { symbol: "AVGO", actor: "博通", aliases: ["broadcom", "avgo"] },
-  { symbol: "TSM", actor: "台积电", aliases: ["taiwan semiconductor", "tsmc"] },
-  { symbol: "RKLB", actor: "Rocket Lab", aliases: ["rocket lab", "rklb"] },
-  { symbol: "META", actor: "Meta", aliases: ["meta platforms", "meta stock"] },
-  { symbol: "BABA", actor: "阿里巴巴", aliases: ["alibaba", "baba"] },
+  { symbol: "AMD", actor: "AMD", aliases: ["amd", "advanced micro devices"], targets: ["nvda", "innolight"] },
+  { symbol: "AVGO", actor: "博通", aliases: ["broadcom", "avgo"], targets: ["nvda", "innolight"] },
+  { symbol: "TSM", actor: "台积电", aliases: ["taiwan semiconductor", "tsmc"], targets: ["nvda", "innolight"] },
+  { symbol: "RKLB", actor: "Rocket Lab", aliases: ["rocket lab", "rklb"], targets: ["spacex"] },
+  { symbol: "META", actor: "Meta", aliases: ["meta platforms", "meta stock"], targets: ["googl", "tencent"] },
+  { symbol: "BABA", actor: "阿里巴巴", aliases: ["alibaba", "baba"], targets: ["tencent"] },
 ] as const;
 
 export const secCompanies = [
-  { actor: "英伟达", cik: "0001045810" },
-  { actor: "特斯拉", cik: "0001318605" },
-  { actor: "谷歌", cik: "0001652044" },
+  { id: "nvda", actor: "英伟达", cik: "0001045810" },
+  { id: "tsla", actor: "特斯拉", cik: "0001318605" },
+  { id: "googl", actor: "谷歌", cik: "0001652044" },
 ] as const;
