@@ -2,7 +2,34 @@
 
 import { useState } from "react";
 import type { Signal } from "./market-config";
-import { isEnglishHeadline } from "./signal-presentation";
+import {
+  isEnglishHeadline,
+  isValidTranslationText,
+  translationFromResponse,
+  translationUrl,
+} from "./signal-presentation";
+
+const cacheKey = "msd-translations";
+
+function cachedTranslation(title: string) {
+  try {
+    const cache = JSON.parse(localStorage.getItem(cacheKey) ?? "{}");
+    return typeof cache[title] === "string" ? cache[title] : "";
+  } catch {
+    localStorage.removeItem(cacheKey);
+    return "";
+  }
+}
+
+function cacheTranslation(title: string, translation: string) {
+  try {
+    const cache = JSON.parse(localStorage.getItem(cacheKey) ?? "{}");
+    const entries = Object.entries({ ...cache, [title]: translation }).slice(-100);
+    localStorage.setItem(cacheKey, JSON.stringify(Object.fromEntries(entries)));
+  } catch {
+    localStorage.removeItem(cacheKey);
+  }
+}
 
 export function SignalTitle({ signal, onOpen }: { signal: Signal; onOpen: () => void }) {
   const [translation, setTranslation] = useState("");
@@ -20,17 +47,22 @@ export function SignalTitle({ signal, onOpen }: { signal: Signal; onOpen: () => 
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: signal.title }),
-      });
+      const cached = cachedTranslation(signal.title);
+      if (cached) {
+        setTranslation(cached);
+        setShowTranslation(true);
+        return;
+      }
+      if (!isValidTranslationText(signal.title)) throw new Error();
+      const response = await fetch(translationUrl(signal.title));
       const data = await response.json();
-      if (!response.ok || typeof data.translation !== "string") throw new Error();
-      setTranslation(data.translation);
+      const translated = translationFromResponse(data);
+      if (!response.ok || !translated) throw new Error();
+      cacheTranslation(signal.title, translated);
+      setTranslation(translated);
       setShowTranslation(true);
     } catch {
-      setError("翻译暂时不可用");
+      setError("翻译服务繁忙，请稍后重试");
     } finally {
       setLoading(false);
     }

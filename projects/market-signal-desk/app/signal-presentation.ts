@@ -31,6 +31,23 @@ export function isValidTranslationText(value: unknown) {
     isEnglishHeadline(text);
 }
 
+export function translationUrl(value: string) {
+  const url = new URL("https://api.mymemory.translated.net/get");
+  url.searchParams.set("q", normalizeTranslationText(value));
+  url.searchParams.set("langpair", "en|zh-CN");
+  return url.toString();
+}
+
+export function translationFromResponse(value: unknown) {
+  const data = value as { responseData?: { translatedText?: unknown }; responseStatus?: unknown };
+  const translated = data?.responseData?.translatedText;
+  if (Number(data?.responseStatus) !== 200 ||
+    typeof translated !== "string" ||
+    !translated.trim() ||
+    /^MYMEMORY WARNING/i.test(translated)) return null;
+  return normalizeTranslationText(translated);
+}
+
 export function signalTime(value: string, now = new Date()) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "时间未知";
