@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
+import {
+  nasdaqSources,
+  secCompanies,
+  watchedAliases,
+  type Signal,
+} from "../../market-config";
 
 export const dynamic = "force-dynamic";
-
-type Priority = 1 | 2 | 3 | 4;
-type Signal = {
-  id: string;
-  title: string;
-  url: string;
-  source: string;
-  publishedAt: string;
-  priority: Priority;
-  reason: string;
-  actor: string;
-  official: boolean;
-};
 
 function safeUrl(value: string) {
   try {
@@ -55,13 +48,6 @@ function parseRss(xml: string, meta: Omit<Signal, "id" | "title" | "url" | "publ
   });
 }
 
-const watchedAliases = [
-  { actor: "英伟达", values: ["nvidia", "nvda"] },
-  { actor: "SpaceX", values: ["spacex"] },
-  { actor: "特斯拉", values: ["tesla", "tsla"] },
-  { actor: "谷歌", values: ["alphabet", "google", "googl"] },
-];
-
 function classifyWatchedHeadline(title: string) {
   const lower = title.toLowerCase();
   const direct = watchedAliases.find(({ values }) => values.some((value) => lower.includes(value)));
@@ -75,39 +61,30 @@ function classifyWatchedHeadline(title: string) {
   return null;
 }
 
-async function fetchNasdaq(symbol: string): Promise<Signal[]> {
+async function fetchNasdaq(source: (typeof nasdaqSources)[number]): Promise<Signal[]> {
+  const { symbol } = source;
+  const isPeer = "aliases" in source;
   const response = await fetch(`https://www.nasdaq.com/feed/rssoutbound?symbol=${symbol}`, {
     headers: { "User-Agent": "Mozilla/5.0 MarketSignalDesk/1.0" },
     cache: "no-store",
     signal: AbortSignal.timeout(10000),
   });
   if (!response.ok) throw new Error(`nasdaq ${response.status}`);
-  return parseRss(await response.text(), {
+  const signals = parseRss(await response.text(), {
     source: "Nasdaq RSS",
-    priority: 1,
-    reason: "候选信号",
-    actor: symbol,
+    priority: isPeer ? 4 : 1,
+    reason: isPeer ? "海外同类公司与映射市场" : "候选信号",
+    actor: isPeer ? source.actor : symbol,
     official: false,
-  }).flatMap((signal) => {
+  });
+  if (isPeer) {
+    return signals.filter(({ title }) =>
+      source.aliases.some((alias) => title.toLowerCase().includes(alias)));
+  }
+  return signals.flatMap((signal) => {
     const classification = classifyWatchedHeadline(signal.title);
     return classification ? [{ ...signal, ...classification }] : [];
   });
-}
-
-async function fetchPeerNasdaq(symbol: string, actor: string, aliases: string[]): Promise<Signal[]> {
-  const response = await fetch(`https://www.nasdaq.com/feed/rssoutbound?symbol=${symbol}`, {
-    headers: { "User-Agent": "Mozilla/5.0 MarketSignalDesk/1.0" },
-    cache: "no-store",
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!response.ok) throw new Error(`nasdaq peer ${response.status}`);
-  return parseRss(await response.text(), {
-    source: "Nasdaq RSS",
-    priority: 4,
-    reason: "海外同类公司与映射市场",
-    actor,
-    official: false,
-  }).filter(({ title }) => aliases.some((alias) => title.toLowerCase().includes(alias)));
 }
 
 async function fetchTencentAnnouncements(): Promise<Signal[]> {
@@ -169,12 +146,6 @@ async function fetchInnolightAnnouncements(): Promise<Signal[]> {
   });
 }
 
-const secCompanies = [
-  { actor: "英伟达", cik: "0001045810" },
-  { actor: "特斯拉", cik: "0001318605" },
-  { actor: "谷歌", cik: "0001652044" },
-];
-
 async function fetchSecFilings(): Promise<Signal[]> {
   const results = await Promise.allSettled(secCompanies.map(async ({ actor, cik }) => {
     const response = await fetch(`https://data.sec.gov/submissions/CIK${cik}.json`, {
@@ -212,18 +183,10 @@ async function fetchSecFilings(): Promise<Signal[]> {
 
 export async function GET() {
   const sources = await Promise.allSettled([
-    fetchNasdaq("NVDA"),
-    fetchNasdaq("TSLA"),
-    fetchNasdaq("GOOGL"),
+    ...nasdaqSources.map(fetchNasdaq),
     fetchTencentAnnouncements(),
     fetchInnolightAnnouncements(),
     fetchSecFilings(),
-    fetchPeerNasdaq("AMD", "AMD", ["amd", "advanced micro devices"]),
-    fetchPeerNasdaq("AVGO", "博通", ["broadcom", "avgo"]),
-    fetchPeerNasdaq("TSM", "台积电", ["taiwan semiconductor", "tsmc"]),
-    fetchPeerNasdaq("RKLB", "Rocket Lab", ["rocket lab", "rklb"]),
-    fetchPeerNasdaq("META", "Meta", ["meta platforms", "meta stock"]),
-    fetchPeerNasdaq("BABA", "阿里巴巴", ["alibaba", "baba"]),
   ]);
 
   const seen = new Set<string>();

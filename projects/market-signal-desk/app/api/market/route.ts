@@ -1,17 +1,7 @@
 import { NextResponse } from "next/server";
+import { instruments } from "../../market-config";
 
 export const dynamic = "force-dynamic";
-
-const instruments = [
-  { id: "nvda", query: "usNVDA", symbol: "NVDA", name: "英伟达", market: "美股", type: "stock", currency: "USD" },
-  { id: "tsla", query: "usTSLA", symbol: "TSLA", name: "特斯拉", market: "美股", type: "stock", currency: "USD" },
-  { id: "googl", query: "usGOOGL", symbol: "GOOGL", name: "谷歌", market: "美股", type: "stock", currency: "USD" },
-  { id: "tencent", query: "hk00700", symbol: "0700.HK", name: "腾讯控股", market: "港股", type: "stock", currency: "HKD" },
-  { id: "innolight", query: "sz300308", symbol: "300308.SZ", name: "中际旭创", market: "A股", type: "stock", currency: "CNY" },
-  { id: "nasdaq", query: "usIXIC", symbol: "^IXIC", name: "纳斯达克", market: "美国", type: "index", currency: "USD" },
-  { id: "sp500", query: "usINX", symbol: "^GSPC", name: "标普 500", market: "美国", type: "index", currency: "USD" },
-  { id: "sse", query: "sh000001", symbol: "000001.SS", name: "上证指数", market: "中国", type: "index", currency: "CNY" },
-] as const;
 
 function timestamp(value: string) {
   const normalized = value.includes("/")

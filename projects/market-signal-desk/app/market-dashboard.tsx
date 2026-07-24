@@ -1,49 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-
-type Quote = {
-  id: string;
-  symbol: string;
-  name: string;
-  market: string;
-  type: "stock" | "index";
-  value: number;
-  changePct: number | null;
-  currency: string;
-  updatedAt: number;
-};
-
-type Signal = {
-  id: string;
-  title: string;
-  url: string;
-  source: string;
-  publishedAt: string;
-  priority: 1 | 2 | 3 | 4;
-  reason: string;
-  actor: string;
-  official: boolean;
-  image?: string;
-};
-
-const watchlist = [
-  { id: "nvda", symbol: "NVDA", name: "英伟达", market: "美股", tone: "blue" },
-  { id: "spacex", symbol: "PRIVATE", name: "SpaceX", market: "未上市", tone: "amber" },
-  { id: "tsla", symbol: "TSLA", name: "特斯拉", market: "美股", tone: "coral" },
-  { id: "googl", symbol: "GOOGL", name: "谷歌", market: "美股", tone: "blue" },
-  { id: "tencent", symbol: "0700.HK", name: "腾讯", market: "港股", tone: "mint" },
-  { id: "innolight", symbol: "300308.SZ", name: "中际旭创", market: "A股", tone: "amber" },
-] as const;
-
-const indexOrder = ["nasdaq", "sp500", "sse"];
-
-const sourceLinks = [
-  { label: "SEC 披露", href: "https://www.sec.gov/edgar/search/" },
-  { label: "巨潮资讯", href: "https://www.cninfo.com.cn/" },
-  { label: "港交所披露易", href: "https://www1.hkexnews.hk/index_c.htm" },
-  { label: "上交所公告", href: "https://www.sse.com.cn/disclosure/listedinfo/announcement/" },
-];
+import { indexOrder, sourceLinks, watchlist, type Quote, type Signal } from "./market-config";
 
 function displayNumber(value: number) {
   return new Intl.NumberFormat("zh-CN", {
@@ -269,7 +227,7 @@ export function MarketDashboard() {
           </div>
           <div className="source-panel">
             <h3>一手来源快捷入口</h3><p>重要消息请回到监管披露原文核对。</p>
-            <div>{sourceLinks.map((source) => <a href={source.href} target="_blank" rel="noreferrer" key={source.label}>{source.label}<span>↗</span></a>)}</div>
+            <div>{sourceLinks.map(([label, href]) => <a href={href} target="_blank" rel="noreferrer" key={label}>{label}<span>↗</span></a>)}</div>
           </div>
           <div className="saved-summary">
             <span>本机已收藏</span><strong>{saved.length.toString().padStart(2, "0")}</strong><p>收藏与已读状态只保存在你的浏览器里。</p>
