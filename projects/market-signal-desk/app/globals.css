@@ -160,6 +160,15 @@ h1 em { font-style: normal; color: var(--cobalt); }
 .score-tag { padding: 3px 6px; border: 1px solid var(--line); color: var(--cobalt); cursor: help; }
 .signal-body h3 { margin: 11px 0 9px; font-size: clamp(15px, 1.35vw, 19px); line-height: 1.42; letter-spacing: -.015em; }
 .signal-body a:hover h3 { color: var(--cobalt); }
+.translation-actions { display: flex; align-items: center; gap: 9px; margin: -2px 0 10px; min-height: 22px; }
+.translation-actions button {
+  padding: 4px 8px; border: 1px solid var(--line); background: rgba(255,255,255,.65);
+  color: var(--cobalt); font: 700 9px "Cascadia Mono", monospace; cursor: pointer;
+}
+.translation-actions button:hover { border-color: var(--cobalt); }
+.translation-actions button:disabled { color: var(--muted); cursor: wait; }
+.translation-actions span { color: var(--muted); font-size: 9px; }
+.translation-actions .translation-error { color: var(--negative); }
 .signal-body p { margin: 0; color: var(--muted); font-size: 11px; }
 .signal-body p span { color: var(--ink); font-weight: 700; margin-right: 8px; }
 .save-button { align-self: start; border: 0; background: transparent; font-size: 20px; color: #8797a2; cursor: pointer; }

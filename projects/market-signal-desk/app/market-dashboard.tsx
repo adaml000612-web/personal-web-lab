@@ -3,22 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BeginnerMarket } from "./beginner-market";
 import { indexOrder, sourceLinks, watchlist, type Quote, type Signal } from "./market-config";
+import { signalTime } from "./signal-presentation";
+import { SignalTitle } from "./signal-title";
 
 function displayNumber(value: number) {
   return new Intl.NumberFormat("zh-CN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
-}
-
-function relativeTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "时间未知";
-  const minutes = Math.max(1, Math.floor((Date.now() - date.getTime()) / 60000));
-  if (minutes < 60) return `${minutes} 分钟前`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} 小时前`;
-  return `${Math.floor(hours / 24)} 天前`;
 }
 
 export function MarketDashboard() {
@@ -202,9 +194,9 @@ export function MarketDashboard() {
                       <span className="actor-tag">{signal.actor}</span>
                       {signal.official && <span className="official-tag">官方披露</span>}
                       <span className="score-tag" title={signal.factors.join(" · ")}>相关度 {signal.score}</span>
-                      <span>{signal.source}</span><time>{relativeTime(signal.publishedAt)}</time>
+                      <span>{signal.source}</span><time dateTime={signal.publishedAt}>{signalTime(signal.publishedAt)}</time>
                     </div>
-                    <a href={signal.url} target="_blank" rel="noreferrer" onClick={() => openSignal(signal)}><h3>{signal.title}</h3></a>
+                    <SignalTitle signal={signal} onOpen={() => openSignal(signal)} />
                     <p><span>排序原因</span>{signal.reason}</p>
                   </div>
                   <button className={`save-button ${saved.includes(signal.id) ? "is-saved" : ""}`} onClick={() => toggleSaved(signal.id)} aria-label={saved.includes(signal.id) ? "取消收藏" : "收藏"}>
@@ -248,7 +240,7 @@ export function MarketDashboard() {
       )}
 
       <footer>
-        <span>前哨 v1.3.1 · 数据可能延迟</span>
+        <span>前哨 v1.4.1 · 数据可能延迟</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>
