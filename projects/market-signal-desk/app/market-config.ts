@@ -7,6 +7,10 @@ export type Quote = {
   market: string;
   type: "stock" | "index";
   value: number;
+  previous: number | null;
+  open: number | null;
+  high: number | null;
+  low: number | null;
   changePct: number | null;
   currency: string;
   updatedAt: number;
