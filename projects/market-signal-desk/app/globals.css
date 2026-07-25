@@ -215,8 +215,8 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 @keyframes ticker { to { transform: translateX(-50%); } }
 .pulse-quote { display: inline-flex; align-items: baseline; gap: 10px; white-space: nowrap; font: 10px var(--mono); }
 .pulse-quote b { color: #c0c9d8; font-family: var(--body); font-size: 10px; }
-.pulse-quote > span { color: white; }
-.pulse-quote i { font-style: normal; font-weight: 700; }
+.pulse-quote > span { color: #68758b; font-size: 9px; }
+.pulse-quote i { padding: 3px 7px; border-radius: 999px; background: rgba(255,255,255,.035); font-size: 12px; font-style: normal; font-weight: 800; }
 .pulse-placeholder { color: var(--muted); font-size: 10px; }
 .pulse-stamp { height: 100%; padding: 0 max(22px, calc((100vw - 1500px) / 2)) 0 22px; display: grid; place-items: center; border-left: 1px solid var(--line); color: #728098; font: 9px var(--mono); }
 .positive { color: var(--positive) !important; }
@@ -423,7 +423,7 @@ h1 em {
 .tone-mint { background: linear-gradient(145deg, #10a77d, #45e5b2); color: #06130f; }
 .watch-chip strong { display: block; font-size: 11px; }
 .watch-chip small { display: block; margin-top: 3px; color: #68758c; font: 8px var(--mono); }
-.watch-chip b { font: 700 9px var(--mono); }
+.watch-chip b { font: 800 12px var(--mono); letter-spacing: -.03em; }
 .future-chip { min-width: 130px; padding: 9px 14px; display: flex; flex-direction: column; justify-content: center; border: 1px dashed rgba(255,200,87,.3); border-radius: 13px; }
 .future-chip span { color: var(--gold); font: 8px var(--mono); }
 .future-chip strong { margin-top: 5px; color: #c9c0a8; font-size: 11px; }
@@ -662,8 +662,8 @@ h1 em {
 }
 .index-card > div:first-child { display: flex; justify-content: space-between; color: #69758b; font: 8px var(--mono); }
 .index-card h3 { margin: 18px 0 3px; color: #9aa5b8; font-size: 11px; }
-.index-card > strong { font: 750 22px var(--mono); letter-spacing: -.05em; }
-.index-card > p { margin: 6px 0 0; font: 9px var(--mono); }
+.index-card > strong { color: #78849a; font: 650 14px var(--mono); letter-spacing: -.03em; }
+.index-card > p { margin: 7px 0 0; font: 800 21px var(--mono); letter-spacing: -.05em; }
 .micro-chart { position: absolute; right: 12px; bottom: 13px; width: 74px; height: 38px; display: flex; align-items: end; gap: 3px; opacity: .65; }
 .micro-chart i { width: 6px; border-radius: 2px 2px 0 0; background: linear-gradient(var(--cyan), var(--iris)); animation: barRise .7s both; transform-origin: bottom; }
 .micro-chart i:nth-child(2) { animation-delay: .08s; }
@@ -787,7 +787,7 @@ h1 em {
 .quote-option strong, .quote-option small { display: block; }
 .quote-option strong { font-size: 11px; }
 .quote-option small { margin-top: 4px; color: #657087; font: 8px var(--mono); }
-.quote-option b { font: 700 9px var(--mono); }
+.quote-option b { padding: 5px 7px; border-radius: 7px; background: rgba(255,255,255,.035); font: 800 12px var(--mono); }
 .quote-skeleton { height: 300px; }
 .hero-quote {
   min-height: 310px;
@@ -811,10 +811,19 @@ h1 em {
 .hero-quote::before { width: 280px; height: 280px; right: -70px; top: -130px; box-shadow: 0 0 0 38px rgba(124,92,255,.025); }
 .hero-quote::after { width: 9px; height: 9px; right: 20%; top: 20%; background: var(--cyan); box-shadow: 0 0 20px var(--cyan); animation: blink 2s infinite; }
 .hero-quote > div { display: flex; justify-content: space-between; color: #8290a6; font: 9px var(--mono); }
-.hero-quote h2 { margin: 62px 0 9px; color: #a6b0c2; font-size: 14px; }
-.hero-quote > strong { font: 780 clamp(46px, 5.5vw, 76px)/1 var(--mono); letter-spacing: -.075em; }
-.hero-quote > p { margin: 20px 0 0; font: 700 13px var(--mono); }
-.hero-quote > p small { color: #778399; font: 9px var(--body); }
+.hero-quote h2 { margin: 38px 0 22px; color: #a6b0c2; font-size: 14px; }
+.hero-change > span, .hero-price > span { display: block; color: #69758b; font: 8px var(--mono); letter-spacing: .12em; }
+.hero-change p { margin: 6px 0 0; font: 820 clamp(46px, 5.5vw, 76px)/1 var(--mono); letter-spacing: -.075em; }
+.hero-change p small { display: block; margin-top: 10px; color: #778399; font: 9px var(--body); letter-spacing: 0; }
+.hero-price {
+  position: absolute;
+  right: 29px;
+  bottom: 29px;
+  padding-left: 18px;
+  border-left: 1px solid var(--line);
+  text-align: right;
+}
+.hero-price strong { display: block; margin-top: 6px; color: #aab4c5; font: 700 clamp(20px, 2.1vw, 30px)/1 var(--mono); letter-spacing: -.05em; }
 .quote-metrics { margin-top: 12px; display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
 .quote-metrics > div { min-height: 112px; padding: 17px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.02); transition: border-color .2s ease, transform .2s ease; }
 .quote-metrics > div:hover { border-color: rgba(49,215,255,.28); transform: translateY(-3px); }
@@ -952,7 +961,9 @@ footer p { margin: 0; text-align: center; }
   .stock-search input { width: 100px; }
   .stock-search button { min-width: 84px; }
   .hero-quote { min-height: 270px; padding: 22px; }
-  .hero-quote > strong { font-size: 38px; }
+  .hero-change p { font-size: 44px; }
+  .hero-price { position: static; margin-top: 25px; padding: 14px 0 0; border-left: 0; border-top: 1px solid var(--line); text-align: left; }
+  .hero-price strong { font-size: 23px; }
   .quote-metrics { grid-template-columns: 1fr; }
   .kline-heading { align-items: flex-start; flex-direction: column; }
   .period-tabs { width: 100%; }

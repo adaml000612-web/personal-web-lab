@@ -117,11 +117,14 @@ export function BeginnerMarket({ quotes, loading }: { quotes: Quote[]; loading: 
               <article className="hero-quote">
                 <div><span>{selected.market}</span><small>{selected.symbol}</small></div>
                 <h2>{selected.name}</h2>
-                <strong>{number(selected.value, prefix)}</strong>
-                <p className={positive ? "positive" : "negative"}>
-                  {positive ? "▲" : "▼"} {Math.abs(selected.changePct ?? 0).toFixed(2)}%
-                  <small> 相比上一个交易日收盘价</small>
-                </p>
+                <div className="hero-change">
+                  <span>今日涨跌</span>
+                  <p className={positive ? "positive" : "negative"}>
+                    {positive ? "▲" : "▼"} {Math.abs(selected.changePct ?? 0).toFixed(2)}%
+                    <small>相比上一个交易日收盘价</small>
+                  </p>
+                </div>
+                <div className="hero-price"><span>现价</span><strong>{number(selected.value, prefix)}</strong></div>
               </article>
               <div className="quote-metrics">
                 {[
