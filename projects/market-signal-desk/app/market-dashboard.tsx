@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import { BeginnerMarket } from "./beginner-market";
 import { indexOrder, sourceLinks, watchlist, type Quote, type Signal } from "./market-config";
 import { signalTime } from "./signal-presentation";
@@ -37,6 +37,25 @@ function tiltCard(event: ReactPointerEvent<HTMLElement>) {
 function resetTilt(event: ReactPointerEvent<HTMLElement>) {
   event.currentTarget.style.setProperty("--tilt-x", "0deg");
   event.currentTarget.style.setProperty("--tilt-y", "0deg");
+}
+
+function radarEchoStyle(priority: number, index: number) {
+  const rings = {
+    1: [13, 20],
+    2: [22, 29],
+    3: [31, 38],
+    4: [40, 47],
+  } as const;
+  const [inner, outer] = rings[priority as keyof typeof rings] ?? rings[4];
+  const radius = inner + ((index * 7 + priority * 3) % (outer - inner + 1));
+  const angle = ((index * 137.5 + priority * 47) % 360) * Math.PI / 180;
+  return {
+    left: `${50 + Math.cos(angle) * radius}%`,
+    top: `${50 + Math.sin(angle) * radius}%`,
+    "--echo-delay": `${-((index * 1.17 + priority * .63) % 8).toFixed(2)}s`,
+    "--echo-duration": `${(4.8 + ((index + priority) % 5) * .72).toFixed(2)}s`,
+    "--echo-size": `${7 + Math.round((index * 3 + priority) % 5)}px`,
+  } as CSSProperties;
 }
 
 export function MarketDashboard() {
@@ -134,8 +153,8 @@ export function MarketDashboard() {
 
   const indices = indexOrder.map((id) => quoteMap.get(id)).filter((quote): quote is Quote => Boolean(quote));
   const stocks = quotes.filter(({ type }) => type === "stock");
-  const priorityCounts = [1, 2, 3, 4].map((level) =>
-    signals.filter(({ priority: signalPriority }) => signalPriority === level).length);
+  const radarEchoes = [1, 2, 3, 4].flatMap((level) =>
+    signals.filter(({ priority: signalPriority }) => signalPriority === level).slice(0, 7));
   const dataTimestamp = lastUpdated?.toLocaleString("zh-CN", {
     month: "2-digit",
     day: "2-digit",
@@ -154,6 +173,15 @@ export function MarketDashboard() {
     setFocusedSymbol(symbol);
     setModule("prices");
     window.setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+  }
+
+  function openRadarEcho(signal: Signal) {
+    setPriority(signal.priority);
+    setSelected(signal.targets[0] ?? "all");
+    setExpandedSignal(signal.id);
+    openSignal(signal);
+    setModule("signals");
+    window.setTimeout(() => document.querySelector("#signal-feed")?.scrollIntoView({ behavior: "smooth" }), 0);
   }
 
   return (
@@ -206,7 +234,7 @@ export function MarketDashboard() {
           <div className="radar-intro">
             <p className="eyebrow"><span /> LIVE MARKET RADAR</p>
             <h1>市场正在发生什么？</h1>
-            <p>让雷达替你扫过公司披露、产业链、指数与海外市场。点击任意信号层进入情报详情，点击下方股票进入行情。</p>
+            <p>扫描光束掠过市场时，情报会像真实回波一样随机显现。圆点离中心越近，与你的关注越直接；点击圆点查看对应情报。</p>
             <div className="scan-progress" aria-live="polite">
               <span className={refreshing ? "scan-beacon is-refreshing" : "scan-beacon"} />
               <strong>{refreshing ? "正在刷新最新情报" : `第 ${scanCount + 1} / 5 圈`}</strong>
@@ -216,20 +244,21 @@ export function MarketDashboard() {
 
           <div className="true-radar" aria-label={`实时情报雷达，共发现 ${signals.length} 条信号`}>
             <div className="radar-grid" aria-hidden="true" />
+            <div className="radar-range-pulses" aria-hidden="true"><i /><i /><i /></div>
             <div className="radar-sweep" aria-hidden="true" />
             <div className="radar-afterglow" aria-hidden="true" />
-            {([1, 2, 3, 4] as const).map((level, index) => (
+            {radarEchoes.map((signal, index) => (
               <button
-                className={`radar-target radar-target-${level}`}
-                key={level}
-                onClick={() => openSignalLayer(level)}
-                aria-label={`进入 P${level} ${priorityLabels[level]}，共 ${priorityCounts[index]} 条`}
-              >
-                <i /><span>P{level}</span><strong>{priorityCounts[index]}</strong><small>{priorityLabels[level]}</small>
-              </button>
+                className={`radar-echo radar-echo-p${signal.priority}`}
+                key={signal.id}
+                style={radarEchoStyle(signal.priority, index)}
+                onClick={() => openRadarEcho(signal)}
+                aria-label={`打开 P${signal.priority} 情报：${signal.title}`}
+                title={`P${signal.priority} · ${signal.actor}`}
+              />
             ))}
             <button className="radar-core" onClick={() => openSignalLayer("all")} aria-label={`进入全部情报，共 ${signals.length} 条`}>
-              <span>已捕获</span><strong>{signals.length.toString().padStart(2, "0")}</strong><small>条市场信号</small>
+              <span>扫描中</span><strong>{signals.length.toString().padStart(2, "0")}</strong><small>已捕获回波</small>
             </button>
             <span className="radar-bearing bearing-n" aria-hidden="true">N</span>
             <span className="radar-bearing bearing-e" aria-hidden="true">E</span>
@@ -394,7 +423,7 @@ export function MarketDashboard() {
       )}
 
       <footer>
-        <span>前哨 v2.1.0 · MARKET OBSERVATORY</span>
+        <span>前哨 v2.1.1 · MARKET OBSERVATORY</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>
