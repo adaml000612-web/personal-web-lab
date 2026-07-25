@@ -40,7 +40,7 @@ function resetTilt(event: ReactPointerEvent<HTMLElement>) {
 }
 
 export function MarketDashboard() {
-  const [module, setModule] = useState<"signals" | "prices">("signals");
+  const [module, setModule] = useState<"home" | "signals" | "prices">("home");
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [signals, setSignals] = useState<Signal[]>([]);
   const [unavailable, setUnavailable] = useState<string[]>([]);
@@ -51,6 +51,8 @@ export function MarketDashboard() {
   const [saved, setSaved] = useState<string[]>([]);
   const [read, setRead] = useState<string[]>([]);
   const [expandedSignal, setExpandedSignal] = useState("");
+  const [focusedSymbol, setFocusedSymbol] = useState("");
+  const [scanCount, setScanCount] = useState(0);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
@@ -92,7 +94,13 @@ export function MarketDashboard() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => void loadData(), 0);
-    const interval = window.setInterval(() => void loadData(), 60_000);
+    const interval = window.setInterval(() => {
+      setScanCount((current) => {
+        const next = (current + 1) % 5;
+        if (next === 0) void loadData(true);
+        return next;
+      });
+    }, 6_000);
     return () => {
       window.clearTimeout(timer);
       window.clearInterval(interval);
@@ -125,6 +133,7 @@ export function MarketDashboard() {
   }
 
   const indices = indexOrder.map((id) => quoteMap.get(id)).filter((quote): quote is Quote => Boolean(quote));
+  const stocks = quotes.filter(({ type }) => type === "stock");
   const priorityCounts = [1, 2, 3, 4].map((level) =>
     signals.filter(({ priority: signalPriority }) => signalPriority === level).length);
   const dataTimestamp = lastUpdated?.toLocaleString("zh-CN", {
@@ -134,26 +143,39 @@ export function MarketDashboard() {
     minute: "2-digit",
   });
 
+  function openSignalLayer(level: number | "all") {
+    setPriority(level);
+    setSelected("all");
+    setModule("signals");
+    window.setTimeout(() => document.querySelector("#signal-feed")?.scrollIntoView({ behavior: "smooth" }), 0);
+  }
+
+  function openStock(symbol: string) {
+    setFocusedSymbol(symbol);
+    setModule("prices");
+    window.setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+  }
+
   return (
     <main className="app-shell cosmic-shell" onPointerMove={followPointer}>
       <div className="ambient-field" aria-hidden="true"><i /><i /><i /></div>
       <header className="topbar">
-        <a className="brand" href="#top" aria-label="前哨首页">
+        <a className="brand" href="#top" aria-label="前哨首页" onClick={() => setModule("home")}>
           <span className="brand-mark" aria-hidden="true"><i /></span>
           <span><strong>前哨</strong><small>MARKET OBSERVATORY</small></span>
         </a>
         <nav className="module-nav" aria-label="应用板块">
-          <button className={module === "signals" ? "is-active" : ""} onClick={() => setModule("signals")}><span>情报雷达</span></button>
+          <button className={module === "home" || module === "signals" ? "is-active" : ""} onClick={() => setModule("home")}><span>情报雷达</span></button>
           <button className={module === "prices" ? "is-active" : ""} onClick={() => setModule("prices")}><span>行情入门</span></button>
         </nav>
         <div className="top-actions">
           <div className="market-clock" aria-label="数据状态">
             <span className={error ? "status-dot status-dot--warn" : "status-dot"} />
-            <span>{dataTimestamp ? `抓取于 ${dataTimestamp} · 每 60 秒更新` : "正在连接数据源"}</span>
+            <span>{dataTimestamp ? `抓取于 ${dataTimestamp} · 雷达每 5 圈更新` : "正在连接数据源"}</span>
           </div>
           <button className="refresh-button" onClick={() => void loadData(true)} disabled={refreshing}>
             <span className={refreshing ? "refresh-icon spinning" : "refresh-icon"} aria-hidden="true">↻</span>
-            {refreshing ? "刷新中" : module === "prices" ? "刷新行情" : "刷新情报"}
+            {refreshing ? "刷新中" : module === "prices" ? "刷新行情" : "立即扫描"}
           </button>
         </div>
       </header>
@@ -179,46 +201,66 @@ export function MarketDashboard() {
         <span className="pulse-stamp">{lastUpdated ? lastUpdated.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) : "--:--"}</span>
       </section>
 
-      {module === "signals" ? (
-        <>
-          <section className="hero-observatory" id="top">
-            <div className="hero-copy">
-              <p className="eyebrow"><span /> PERSONAL MARKET INTELLIGENCE</p>
-              <h1>把市场噪音<br />压缩成<em>信号</em></h1>
-              <p className="intro">公司披露、产业链异动、指数脉冲与海外映射，沿着与你的距离进入同一条观察轨道。</p>
-              <div className="hero-actions">
-                <a className="primary-action" href="#signal-feed">进入今日信号 <span>↘</span></a>
-                <span className="live-caption"><i /> 每 60 秒重新扫描</span>
-              </div>
+      {module === "home" ? (
+        <section className="radar-home" id="top">
+          <div className="radar-intro">
+            <p className="eyebrow"><span /> LIVE MARKET RADAR</p>
+            <h1>市场正在发生什么？</h1>
+            <p>让雷达替你扫过公司披露、产业链、指数与海外市场。点击任意信号层进入情报详情，点击下方股票进入行情。</p>
+            <div className="scan-progress" aria-live="polite">
+              <span className={refreshing ? "scan-beacon is-refreshing" : "scan-beacon"} />
+              <strong>{refreshing ? "正在刷新最新情报" : `第 ${scanCount + 1} / 5 圈`}</strong>
+              <small>每 5 圈自动刷新新闻</small>
             </div>
-            <div className="signal-vortex" aria-label={`交互式信号雷达，今日发现 ${signals.length} 条关联信号`}>
-              <div className="vortex-halo halo-a" />
-              <div className="vortex-halo halo-b" />
-              <div className="vortex-halo halo-c" />
-              <div className="vortex-axis axis-x" />
-              <div className="vortex-axis axis-y" />
-              {([1, 2, 3, 4] as const).map((level, index) => (
-                <button
-                  className={`vortex-node node-${level} ${priority === level ? "is-active" : ""}`}
-                  key={level}
-                  onClick={() => setPriority(level)}
-                  aria-label={`只看 P${level} ${priorityLabels[level]}，共 ${priorityCounts[index]} 条`}
-                >
-                  <strong>P{level}</strong><small>{priorityCounts[index]}</small>
-                </button>
-              ))}
-              <button className={`vortex-core ${priority === "all" ? "is-active" : ""}`} onClick={() => setPriority("all")} aria-label="查看全部信号">
-                <span>今日信号</span>
-                <strong>{signals.length.toString().padStart(2, "0")}</strong>
-                <small>点击看全部</small>
+          </div>
+
+          <div className="true-radar" aria-label={`实时情报雷达，共发现 ${signals.length} 条信号`}>
+            <div className="radar-grid" aria-hidden="true" />
+            <div className="radar-sweep" aria-hidden="true" />
+            <div className="radar-afterglow" aria-hidden="true" />
+            {([1, 2, 3, 4] as const).map((level, index) => (
+              <button
+                className={`radar-target radar-target-${level}`}
+                key={level}
+                onClick={() => openSignalLayer(level)}
+                aria-label={`进入 P${level} ${priorityLabels[level]}，共 ${priorityCounts[index]} 条`}
+              >
+                <i /><span>P{level}</span><strong>{priorityCounts[index]}</strong><small>{priorityLabels[level]}</small>
               </button>
-              <div className="vortex-filter-state" aria-live="polite">
-                <span>当前雷达</span>
-                <strong>{priority === "all" ? "全部信号" : `P${priority} · ${priorityLabels[priority]}`}</strong>
+            ))}
+            <button className="radar-core" onClick={() => openSignalLayer("all")} aria-label={`进入全部情报，共 ${signals.length} 条`}>
+              <span>已捕获</span><strong>{signals.length.toString().padStart(2, "0")}</strong><small>条市场信号</small>
+            </button>
+            <span className="radar-bearing bearing-n" aria-hidden="true">N</span>
+            <span className="radar-bearing bearing-e" aria-hidden="true">E</span>
+            <span className="radar-bearing bearing-s" aria-hidden="true">S</span>
+            <span className="radar-bearing bearing-w" aria-hidden="true">W</span>
+          </div>
+
+          <div className="home-stock-rail" aria-label="关注股票，连续滚动，悬停暂停">
+            <div className="stock-rail-label"><span>WATCHLIST</span><strong>点击查看行情</strong></div>
+            <div className="stock-rail-window">
+              <div className="stock-rail-track">
+                {stocks.length ? [...stocks, ...stocks].map((quote, index) => (
+                  <button key={`${quote.id}-${index}`} aria-hidden={index >= stocks.length} tabIndex={index >= stocks.length ? -1 : 0} onClick={() => openStock(quote.symbol)}>
+                    <span><strong>{quote.name}</strong><small>{quote.symbol}</small></span>
+                    <b className={(quote.changePct ?? 0) >= 0 ? "positive" : "negative"}>
+                      {(quote.changePct ?? 0) >= 0 ? "▲" : "▼"} {Math.abs(quote.changePct ?? 0).toFixed(2)}%
+                    </b>
+                    <i>{displayNumber(quote.value)}</i>
+                  </button>
+                )) : <span className="pulse-placeholder">正在连接关注股票</span>}
               </div>
             </div>
-            <div className="hero-coordinate" aria-hidden="true"><span>CN / HK / US</span><span>31.2304° N · 121.4737° E</span></div>
-          </section>
+          </div>
+        </section>
+      ) : module === "signals" ? (
+        <>
+          <header className="detail-header" id="top">
+            <button onClick={() => setModule("home")}>← 返回雷达</button>
+            <div><p className="eyebrow">INTELLIGENCE DETAIL</p><h1>情报详情</h1><p>从雷达进入后，在这里筛选公司、核对来源和判断依据。</p></div>
+            <span>{priority === "all" ? "全部信号" : `P${priority} · ${priorityLabels[priority]}`}</span>
+          </header>
 
           <section className="watch-orbit" aria-label="我的关注标的">
             <div className="orbit-label"><span>TRACKING</span><strong>我的关注轨道</strong></div>
@@ -348,11 +390,11 @@ export function MarketDashboard() {
           </div>
         </>
       ) : (
-        <BeginnerMarket quotes={quotes} loading={loading} />
+        <BeginnerMarket quotes={quotes} loading={loading} initialSymbol={focusedSymbol} />
       )}
 
       <footer>
-        <span>前哨 v2.0.4 · MARKET OBSERVATORY</span>
+        <span>前哨 v2.1.0 · MARKET OBSERVATORY</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>

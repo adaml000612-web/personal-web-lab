@@ -11,7 +11,7 @@ function number(value: number | null, prefix = "") {
   return value === null ? "—" : `${prefix}${value.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export function BeginnerMarket({ quotes, loading }: { quotes: Quote[]; loading: boolean }) {
+export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes: Quote[]; loading: boolean; initialSymbol?: string }) {
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState<Quote[]>([]);
   const [selectedId, setSelectedId] = useState("");
@@ -26,7 +26,9 @@ export function BeginnerMarket({ quotes, loading }: { quotes: Quote[]; loading: 
     const merged = [...searched, ...quotes.filter(({ type }) => type === "stock")];
     return [...new Map(merged.map((quote) => [quote.symbol, quote])).values()];
   }, [quotes, searched]);
-  const selected = stocks.find(({ id }) => id === selectedId) ?? stocks[0];
+  const selected = stocks.find(({ id }) => id === selectedId)
+    ?? stocks.find(({ symbol }) => symbol === initialSymbol)
+    ?? stocks[0];
   const indices = quotes.filter(({ type }) => type === "index");
 
   useEffect(() => {
@@ -81,13 +83,13 @@ export function BeginnerMarket({ quotes, loading }: { quotes: Quote[]; loading: 
 
   return (
     <section className="beginner-market" id="top">
-      <header className="price-intro">
+      <header className="price-intro price-intro--compact">
         <div>
           <p className="eyebrow">BEGINNER QUOTE BOARD</p>
-          <h1>先看懂价格，<br /><em>再考虑交易</em></h1>
+          <h1>股票行情</h1>
+          <p>涨跌优先，现价与 K 线作为辅助。选择左侧股票，或输入代码查询。</p>
         </div>
         <div>
-          <p>输入股票代码即可查询。支持 NVDA 这类美股代码、00700 或 0700.HK 港股代码，以及 300308 或 600519 这类 A 股代码。</p>
           <form className="stock-search" onSubmit={search}>
             <label className="sr-only" htmlFor="stock-symbol">股票代码</label>
             <input id="stock-symbol" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="例如 NVDA、0700.HK、300308" />
