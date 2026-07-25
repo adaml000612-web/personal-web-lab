@@ -20,7 +20,7 @@ test("server-renders the market signal desk", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "市场正在发生什么", "LIVE PULSE", "v2.1.2", "实时情报雷达", "每 5 圈自动刷新新闻", "真实回波"]) {
+  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "今日扫描摘要", "全部信号", "公司级", "尚未阅读", "LIVE PULSE", "v2.2.0", "实时情报雷达", "每 5 圈自动刷新新闻"]) {
     assert.match(html, new RegExp(content));
   }
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);

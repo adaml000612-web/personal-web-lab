@@ -12,6 +12,7 @@ const priorityLabels = {
   3: "市场指数",
   4: "海外映射",
 } as const;
+const priorityShortLabels = ["", "公司披露", "产业链", "市场指数", "海外映射"] as const;
 
 function displayNumber(value: number) {
   return new Intl.NumberFormat("zh-CN", {
@@ -154,6 +155,9 @@ export function MarketDashboard() {
 
   const indices = indexOrder.map((id) => quoteMap.get(id)).filter((quote): quote is Quote => Boolean(quote));
   const stocks = quotes.filter(({ type }) => type === "stock");
+  const priorityCounts = [1, 2, 3, 4].map((level) =>
+    signals.filter(({ priority: signalPriority }) => signalPriority === level).length);
+  const unreadCount = signals.filter(({ id }) => !read.includes(id)).length;
   const radarEchoes = [1, 2, 3, 4].flatMap((level) =>
     signals.filter(({ priority: signalPriority }) => signalPriority === level).slice(0, 7));
   const dataTimestamp = lastUpdated?.toLocaleString("zh-CN", {
@@ -233,9 +237,22 @@ export function MarketDashboard() {
       {module === "home" ? (
         <section className="radar-home" id="top">
           <div className="radar-intro">
-            <p className="eyebrow"><span /> LIVE MARKET RADAR</p>
-            <h1>市场正在发生什么？</h1>
-            <p>扫描光束掠过市场时，情报会像真实回波一样随机显现。圆点离中心越近，与你的关注越直接；点击圆点查看对应情报。</p>
+            <p className="eyebrow"><span /> TODAY&apos;S SIGNAL MAP</p>
+            <h1>今日扫描摘要</h1>
+            <p className="radar-intro-copy">先处理与你最直接相关的公司披露，再向外查看产业链、指数和海外映射。</p>
+            <div className="radar-summary" aria-label="今日情报摘要">
+              <span><strong>{signals.length}</strong><small>全部信号</small></span>
+              <span><strong>{priorityCounts[0]}</strong><small>公司级</small></span>
+              <span><strong>{unreadCount}</strong><small>尚未阅读</small></span>
+            </div>
+            <div className="priority-launchpad" aria-label="按信号距离进入情报">
+              {([1, 2, 3, 4] as const).map((level, index) => (
+                <button className={`priority-launch priority-launch-p${level}`} key={level} onClick={() => openSignalLayer(level)}>
+                  <i /><span><small>P{level}</small><strong>{priorityShortLabels[level]}</strong></span>
+                  <b>{priorityCounts[index]}</b><em>↗</em>
+                </button>
+              ))}
+            </div>
             <div className="scan-progress" aria-live="polite">
               <span className={refreshing ? "scan-beacon is-refreshing" : "scan-beacon"} />
               <strong>{refreshing ? "正在刷新最新情报" : `第 ${scanCount + 1} / 5 圈`}</strong>
@@ -424,7 +441,7 @@ export function MarketDashboard() {
       )}
 
       <footer>
-        <span>前哨 v2.1.2 · MARKET OBSERVATORY</span>
+        <span>前哨 v2.2.0 · MARKET OBSERVATORY</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>
