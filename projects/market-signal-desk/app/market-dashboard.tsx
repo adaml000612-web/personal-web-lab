@@ -238,8 +238,8 @@ export function MarketDashboard() {
         <section className="radar-home" id="top">
           <div className="radar-intro">
             <p className="eyebrow"><span /> TODAY&apos;S SIGNAL MAP</p>
-            <h1>今日扫描摘要</h1>
-            <p className="radar-intro-copy">先处理与你最直接相关的公司披露，再向外查看产业链、指数和海外映射。</p>
+            <h1>今日重点</h1>
+            <p className="radar-intro-copy">越靠前，与你关注的公司越直接。选择一层，查看今天值得处理的信号。</p>
             <div className="radar-summary" aria-label="今日情报摘要">
               <span><strong>{signals.length}</strong><small>全部信号</small></span>
               <span><strong>{priorityCounts[0]}</strong><small>公司级</small></span>
@@ -441,7 +441,7 @@ export function MarketDashboard() {
       )}
 
       <footer>
-        <span>前哨 v2.2.0 · MARKET OBSERVATORY</span>
+        <span>前哨 v2.2.1 · MARKET OBSERVATORY</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>
