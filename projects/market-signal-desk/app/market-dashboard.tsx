@@ -122,6 +122,25 @@ export function MarketDashboard() {
         </div>
       </header>
 
+      <section className="market-pulse" aria-label="主要市场脉冲">
+        <div className="pulse-live">
+          <span className={error ? "status-dot status-dot--warn" : "status-dot"} />
+          <strong>{error ? "数据延迟" : "市场脉冲"}</strong>
+        </div>
+        <div className="pulse-track">
+          {indices.length ? indices.map((quote) => (
+            <span className="pulse-quote" key={quote.id}>
+              <b>{quote.name}</b>
+              <span>{displayNumber(quote.value)}</span>
+              <i className={(quote.changePct ?? 0) >= 0 ? "positive" : "negative"}>
+                {(quote.changePct ?? 0) >= 0 ? "+" : ""}{quote.changePct?.toFixed(2)}%
+              </i>
+            </span>
+          )) : <span className="pulse-placeholder">正在连接沪、港、美三地市场</span>}
+        </div>
+        <span className="pulse-stamp">{lastUpdated ? lastUpdated.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) : "--:--"}</span>
+      </section>
+
       {module === "signals" ? (
         <>
       <section className="command-strip" id="top">
@@ -130,8 +149,16 @@ export function MarketDashboard() {
           <h1>只看与你有关的<br /><em>市场信号</em></h1>
         </div>
         <p className="intro">先关注公司本身，再看产业链、所属指数与海外映射。信息按关系远近排队，不让噪音抢走你的注意力。</p>
-        <div className="scan-orbit" aria-hidden="true">
-          <span className="orbit orbit-a" /><span className="orbit orbit-b" /><span className="orbit-core">LIVE</span>
+        <div className="radar-summary" aria-label="今日雷达摘要">
+          <span>今日雷达</span>
+          <strong>{signals.length.toString().padStart(2, "0")}</strong>
+          <small>条关联信号</small>
+          <div className="priority-spectrum" aria-hidden="true">
+            {[1, 2, 3, 4].map((level) => (
+              <i key={level} style={{ flex: Math.max(1, signals.filter((signal) => signal.priority === level).length) }} />
+            ))}
+          </div>
+          <p>P1–P4 按与你的关系远近排序</p>
         </div>
       </section>
 
@@ -240,7 +267,7 @@ export function MarketDashboard() {
       )}
 
       <footer>
-        <span>前哨 v1.4.1 · 数据可能延迟</span>
+        <span>前哨 v1.5.0 · 数据可能延迟</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>

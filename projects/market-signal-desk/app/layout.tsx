@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "前哨 · 投资情报雷达",
     description: "把与你有关的公司、产业链、指数和海外映射信号排好队。",
-    images: ["/social-preview.png"],
+    images: ["/social-preview-v1.5.png"],
   },
 };
 
