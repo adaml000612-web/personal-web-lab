@@ -388,13 +388,14 @@ h1 em {
 .orbit-label span { color: var(--iris-bright); font: 8px var(--mono); letter-spacing: .14em; }
 .orbit-label strong { margin-top: 5px; font-size: 12px; }
 .watch-chip {
-  min-width: 164px;
-  min-height: 62px;
-  padding: 8px 12px;
+  min-width: 188px;
+  min-height: 112px;
+  padding: 13px 14px 11px;
   display: grid;
-  grid-template-columns: 34px 1fr auto;
-  gap: 9px;
-  align-items: center;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 10px 8px;
+  align-items: end;
   border: 1px solid transparent;
   border-radius: 13px;
   background: transparent;
@@ -404,11 +405,27 @@ h1 em {
 }
 .watch-chip:hover { border-color: var(--line); background: rgba(255,255,255,.035); transform: translateY(-2px); }
 .watch-chip.is-active { border-color: rgba(124,92,255,.5); background: linear-gradient(110deg, rgba(124,92,255,.18), rgba(49,215,255,.05)); }
-.watch-chip--all { min-width: 110px; grid-template-columns: 1fr auto; }
+.watch-chip--all { min-width: 110px; grid-template-columns: 1fr auto; grid-template-rows: 1fr; align-items: center; }
 .watch-chip--all > span { font-size: 11px; font-weight: 700; }
+.watch-change { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.watch-change small { margin: 0; color: #69758c; font: 8px var(--mono); letter-spacing: .08em; }
+.watch-change b { font: 850 24px/1 var(--mono); letter-spacing: -.07em; }
+.watch-change--private b { color: var(--gold); font-size: 17px; letter-spacing: -.03em; }
+.watch-change--loading b { color: #4f5b70; letter-spacing: .04em; }
+.watch-company { min-width: 0; display: flex; align-items: center; gap: 8px; }
+.watch-company > span:last-child { min-width: 0; }
+.watch-signal-count {
+  align-self: center;
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: #7c879b;
+  font: 8px var(--mono);
+  white-space: nowrap;
+}
 .watch-glyph {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -423,7 +440,6 @@ h1 em {
 .tone-mint { background: linear-gradient(145deg, #10a77d, #45e5b2); color: #06130f; }
 .watch-chip strong { display: block; font-size: 11px; }
 .watch-chip small { display: block; margin-top: 3px; color: #68758c; font: 8px var(--mono); }
-.watch-chip b { font: 800 12px var(--mono); letter-spacing: -.03em; }
 .future-chip { min-width: 130px; padding: 9px 14px; display: flex; flex-direction: column; justify-content: center; border: 1px dashed rgba(255,200,87,.3); border-radius: 13px; }
 .future-chip span { color: var(--gold); font: 8px var(--mono); }
 .future-chip strong { margin-top: 5px; color: #c9c0a8; font-size: 11px; }
@@ -944,7 +960,8 @@ footer p { margin: 0; text-align: center; }
   .signal-vortex { width: 88vw; margin-left: -7vw; }
   .hero-coordinate { display: none; }
   .orbit-label { min-width: 128px; }
-  .watch-chip { min-width: 155px; }
+  .watch-chip { min-width: 172px; min-height: 104px; }
+  .watch-change b { font-size: 22px; }
   .signal-panel, .pulse-panel, .quote-picker, .quote-focus, .beginner-guide { padding: 19px 14px; border-radius: 19px; }
   .section-heading { align-items: flex-start; flex-direction: column; }
   .priority-tabs { width: 100%; }

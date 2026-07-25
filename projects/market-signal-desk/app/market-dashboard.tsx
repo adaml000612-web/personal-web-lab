@@ -201,15 +201,30 @@ export function MarketDashboard() {
             </button>
             {watchlist.map((item) => {
               const quote = quoteMap.get(item.id);
+              const signalCount = signals.filter(({ targets }) => targets.includes(item.id)).length;
               return (
                 <button data-watch-id={item.id} className={`watch-chip ${selected === item.id ? "is-active" : ""}`} key={item.id} onClick={() => setSelected(item.id)}>
-                  <span className={`watch-glyph tone-${item.tone}`}>{item.name.slice(0, 1)}</span>
-                  <span><strong>{item.name}</strong><small>{item.symbol}</small></span>
                   {quote ? (
-                    <b className={(quote.changePct ?? 0) >= 0 ? "positive" : "negative"}>
-                      {(quote.changePct ?? 0) >= 0 ? "+" : ""}{quote.changePct?.toFixed(2)}%
-                    </b>
-                  ) : <b className="private-label">NEWS</b>}
+                    <span className="watch-change">
+                      <small>今日涨跌</small>
+                      <b className={(quote.changePct ?? 0) >= 0 ? "positive" : "negative"}>
+                        {(quote.changePct ?? 0) >= 0 ? "+" : ""}{quote.changePct?.toFixed(2)}%
+                      </b>
+                    </span>
+                  ) : item.symbol === "PRIVATE" ? (
+                    <span className="watch-change watch-change--private">
+                      <small>行情状态</small><b>未上市</b>
+                    </span>
+                  ) : (
+                    <span className="watch-change watch-change--loading">
+                      <small>今日涨跌</small><b>--</b>
+                    </span>
+                  )}
+                  <span className="watch-company">
+                    <span className={`watch-glyph tone-${item.tone}`}>{item.name.slice(0, 1)}</span>
+                    <span><strong>{item.name}</strong><small>{item.symbol}</small></span>
+                  </span>
+                  <span className="watch-signal-count">{signalCount} 条情报</span>
                 </button>
               );
             })}
@@ -311,7 +326,7 @@ export function MarketDashboard() {
       )}
 
       <footer>
-        <span>前哨 v2.0.1 · MARKET OBSERVATORY</span>
+        <span>前哨 v2.0.2 · MARKET OBSERVATORY</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>
