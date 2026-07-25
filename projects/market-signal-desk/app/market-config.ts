@@ -35,7 +35,7 @@ export type RawSignal = Omit<Signal, "score" | "factors">;
 
 export const watchlist = [
   { id: "nvda", symbol: "NVDA", name: "英伟达", market: "美股", tone: "blue" },
-  { id: "spacex", symbol: "PRIVATE", name: "SpaceX", market: "未上市", tone: "amber" },
+  { id: "spacex", symbol: "SPCX", name: "SpaceX", market: "美股", tone: "amber" },
   { id: "tsla", symbol: "TSLA", name: "特斯拉", market: "美股", tone: "coral" },
   { id: "googl", symbol: "GOOGL", name: "谷歌", market: "美股", tone: "blue" },
   { id: "tencent", symbol: "0700.HK", name: "腾讯", market: "港股", tone: "mint" },
@@ -43,11 +43,11 @@ export const watchlist = [
 ] as const;
 
 export const instruments = [
-  ...watchlist.filter(({ symbol }) => symbol !== "PRIVATE").map((item) => ({
+  ...watchlist.map((item) => ({
     ...item,
-    query: { nvda: "usNVDA", tsla: "usTSLA", googl: "usGOOGL", tencent: "hk00700", innolight: "sz300308" }[item.id],
+    query: { nvda: "usNVDA", spacex: "usSPCX", tsla: "usTSLA", googl: "usGOOGL", tencent: "hk00700", innolight: "sz300308" }[item.id],
     type: "stock" as const,
-    currency: { nvda: "USD", tsla: "USD", googl: "USD", tencent: "HKD", innolight: "CNY" }[item.id],
+    currency: { nvda: "USD", spacex: "USD", tsla: "USD", googl: "USD", tencent: "HKD", innolight: "CNY" }[item.id],
   })),
   { id: "nasdaq", query: "usIXIC", symbol: "^IXIC", name: "纳斯达克", market: "美国", type: "index", currency: "USD" },
   { id: "sp500", query: "usINX", symbol: "^GSPC", name: "标普 500", market: "美国", type: "index", currency: "USD" },
@@ -57,6 +57,7 @@ export const instruments = [
 export const indexOrder = ["nasdaq", "sp500", "sse"];
 
 export const sourceLinks = [
+  ["SpaceX 投资者关系", "https://ir.spacex.com/"],
   ["SEC 披露", "https://www.sec.gov/edgar/search/"],
   ["巨潮资讯", "https://www.cninfo.com.cn/"],
   ["港交所披露易", "https://www1.hkexnews.hk/index_c.htm"],
@@ -80,7 +81,7 @@ export const topicRules = [
 ] as const;
 
 export const nasdaqSources = [
-  { symbol: "NVDA" }, { symbol: "TSLA" }, { symbol: "GOOGL" },
+  { symbol: "NVDA" }, { symbol: "SPCX" }, { symbol: "TSLA" }, { symbol: "GOOGL" },
   { symbol: "AMD", actor: "AMD", aliases: ["amd", "advanced micro devices"], targets: ["nvda", "innolight"] },
   { symbol: "AVGO", actor: "博通", aliases: ["broadcom", "avgo"], targets: ["nvda", "innolight"] },
   { symbol: "TSM", actor: "台积电", aliases: ["taiwan semiconductor", "tsmc"], targets: ["nvda", "innolight"] },
@@ -91,6 +92,7 @@ export const nasdaqSources = [
 
 export const secCompanies = [
   { id: "nvda", actor: "英伟达", cik: "0001045810" },
+  { id: "spacex", actor: "SpaceX", cik: "0001181412" },
   { id: "tsla", actor: "特斯拉", cik: "0001318605" },
   { id: "googl", actor: "谷歌", cik: "0001652044" },
 ] as const;

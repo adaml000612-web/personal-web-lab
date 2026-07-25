@@ -74,7 +74,7 @@ export function MarketDashboard() {
       setQuotes(marketData.items ?? []);
       setUnavailable(marketData.unavailable ?? []);
       setSignals(newsData.signals ?? []);
-      setLastUpdated(new Date());
+      setLastUpdated(new Date(newsData.fetchedAt ?? marketData.fetchedAt ?? Date.now()));
     } catch {
       setError("暂时没有拉到最新数据，请稍后再刷新。页面不会用虚构数据填充。");
     } finally {
@@ -118,6 +118,12 @@ export function MarketDashboard() {
   }
 
   const indices = indexOrder.map((id) => quoteMap.get(id)).filter((quote): quote is Quote => Boolean(quote));
+  const dataTimestamp = lastUpdated?.toLocaleString("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   return (
     <main className="app-shell cosmic-shell" onPointerMove={followPointer}>
@@ -134,7 +140,7 @@ export function MarketDashboard() {
         <div className="top-actions">
           <div className="market-clock" aria-label="数据状态">
             <span className={error ? "status-dot status-dot--warn" : "status-dot"} />
-            <span>{lastUpdated ? `更新于 ${lastUpdated.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}` : "正在连接数据源"}</span>
+            <span>{dataTimestamp ? `抓取于 ${dataTimestamp} · 每 60 秒更新` : "正在连接数据源"}</span>
           </div>
           <button className="refresh-button" onClick={() => void loadData(true)} disabled={refreshing}>
             <span className={refreshing ? "refresh-icon spinning" : "refresh-icon"} aria-hidden="true">↻</span>
@@ -211,10 +217,6 @@ export function MarketDashboard() {
                         {(quote.changePct ?? 0) >= 0 ? "+" : ""}{quote.changePct?.toFixed(2)}%
                       </b>
                     </span>
-                  ) : item.symbol === "PRIVATE" ? (
-                    <span className="watch-change watch-change--private">
-                      <small>行情状态</small><b>未上市</b>
-                    </span>
                   ) : (
                     <span className="watch-change watch-change--loading">
                       <small>今日涨跌</small><b>--</b>
@@ -234,7 +236,11 @@ export function MarketDashboard() {
           <div className="mission-grid" id="signal-feed">
             <section className="signal-panel">
               <div className="section-heading signal-heading">
-                <div><span className="section-kicker">SIGNAL STREAM</span><h2>今日信号流</h2><p>{selected === "all" ? "全部关注标的" : watchlist.find((item) => item.id === selected)?.name}</p></div>
+                <div>
+                  <span className="section-kicker">SIGNAL STREAM</span>
+                  <h2>今日信号流</h2>
+                  <p>{selected === "all" ? "全部关注标的" : watchlist.find((item) => item.id === selected)?.name} · 卡片时间为消息发布时间</p>
+                </div>
                 <div className="priority-tabs" aria-label="按优先级筛选">
                   {(["all", 1, 2, 3, 4] as const).map((level) => (
                     <button key={level} className={priority === level ? "is-active" : ""} onClick={() => setPriority(level)}>
@@ -326,7 +332,7 @@ export function MarketDashboard() {
       )}
 
       <footer>
-        <span>前哨 v2.0.2 · MARKET OBSERVATORY</span>
+        <span>前哨 v2.0.3 · MARKET OBSERVATORY</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>

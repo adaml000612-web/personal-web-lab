@@ -20,7 +20,7 @@ test("server-renders the market signal desk", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "信号", "英伟达", "SpaceX", "腾讯", "中际旭创", "指数脉冲", "LIVE PULSE", "v2.0.2"]) {
+  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "信号", "英伟达", "SpaceX", "腾讯", "中际旭创", "指数脉冲", "LIVE PULSE", "v2.0.3"]) {
     assert.match(html, new RegExp(content));
   }
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
@@ -32,9 +32,9 @@ test("keeps market coverage configurable and honest", async () => {
     readFile(new URL("../app/api/news/route.ts", import.meta.url), "utf8"),
   ]);
 
-  for (const content of ['symbol: "PRIVATE"', '"usNVDA"', '"hk00700"', '"sz300308"']) {
+  for (const content of ['symbol: "SPCX"', '"usNVDA"', '"usSPCX"', '"hk00700"', '"sz300308"', 'cik: "0001181412"']) {
     assert.match(config, new RegExp(content));
   }
-  assert.doesNotMatch(config, /symbol:\s*"SPCX"/);
+  assert.doesNotMatch(config, /symbol:\s*"PRIVATE"/);
   assert.match(newsRoute, /SEC EDGAR|腾讯投资者关系|东方财富公告索引/);
 });

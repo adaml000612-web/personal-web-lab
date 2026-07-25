@@ -410,7 +410,6 @@ h1 em {
 .watch-change { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .watch-change small { margin: 0; color: #69758c; font: 8px var(--mono); letter-spacing: .08em; }
 .watch-change b { font: 850 24px/1 var(--mono); letter-spacing: -.07em; }
-.watch-change--private b { color: var(--gold); font-size: 17px; letter-spacing: -.03em; }
 .watch-change--loading b { color: #4f5b70; letter-spacing: .04em; }
 .watch-company { min-width: 0; display: flex; align-items: center; gap: 8px; }
 .watch-company > span:last-child { min-width: 0; }

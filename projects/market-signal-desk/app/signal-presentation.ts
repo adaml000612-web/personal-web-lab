@@ -12,6 +12,15 @@ const chinaTime = new Intl.DateTimeFormat("zh-CN", {
   hourCycle: "h23",
 });
 
+const chinaDateTime = new Intl.DateTimeFormat("zh-CN", {
+  timeZone: "Asia/Shanghai",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
+
 export function isEnglishHeadline(value: string) {
   const latin = value.match(/[A-Za-z]/g)?.length ?? 0;
   const chinese = value.match(/[\u3400-\u9fff]/g)?.length ?? 0;
@@ -57,5 +66,5 @@ export function signalTime(value: string, now = new Date()) {
   if (minutes < 60) return `${minutes} 分钟前`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours} 小时前`;
-  return `${Math.floor(hours / 24)} 天前`;
+  return chinaDateTime.format(date).replace("/", "月").replace(" ", "日 ");
 }

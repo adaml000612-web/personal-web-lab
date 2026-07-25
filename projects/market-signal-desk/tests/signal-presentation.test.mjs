@@ -18,7 +18,7 @@ test("detects headlines that benefit from translation", () => {
 test("shows exact Beijing time for messages published today", () => {
   const now = new Date("2026-07-24T12:30:00Z");
   assert.equal(signalTime("2026-07-24T11:32:00Z", now), "今天 19:32");
-  assert.equal(signalTime("2026-07-22T11:32:00Z", now), "2 天前");
+  assert.equal(signalTime("2026-07-22T11:32:00Z", now), "07月22日 19:32");
 });
 
 test("builds and validates a browser translation request", () => {
