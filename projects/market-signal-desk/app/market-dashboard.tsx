@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { BeginnerMarket } from "./beginner-market";
 import { indexOrder, sourceLinks, watchlist, type Quote, type Signal } from "./market-config";
 import { signalTime } from "./signal-presentation";
@@ -11,6 +11,25 @@ function displayNumber(value: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function followPointer(event: ReactPointerEvent<HTMLElement>) {
+  const rect = event.currentTarget.getBoundingClientRect();
+  event.currentTarget.style.setProperty("--pointer-x", `${event.clientX - rect.left}px`);
+  event.currentTarget.style.setProperty("--pointer-y", `${event.clientY - rect.top}px`);
+}
+
+function tiltCard(event: ReactPointerEvent<HTMLElement>) {
+  const rect = event.currentTarget.getBoundingClientRect();
+  const x = (event.clientX - rect.left) / rect.width - .5;
+  const y = (event.clientY - rect.top) / rect.height - .5;
+  event.currentTarget.style.setProperty("--tilt-x", `${(-y * 3.5).toFixed(2)}deg`);
+  event.currentTarget.style.setProperty("--tilt-y", `${(x * 4.5).toFixed(2)}deg`);
+}
+
+function resetTilt(event: ReactPointerEvent<HTMLElement>) {
+  event.currentTarget.style.setProperty("--tilt-x", "0deg");
+  event.currentTarget.style.setProperty("--tilt-y", "0deg");
 }
 
 export function MarketDashboard() {
@@ -24,6 +43,7 @@ export function MarketDashboard() {
   const [priority, setPriority] = useState<number | "all">("all");
   const [saved, setSaved] = useState<string[]>([]);
   const [read, setRead] = useState<string[]>([]);
+  const [expandedSignal, setExpandedSignal] = useState("");
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
@@ -100,15 +120,16 @@ export function MarketDashboard() {
   const indices = indexOrder.map((id) => quoteMap.get(id)).filter((quote): quote is Quote => Boolean(quote));
 
   return (
-    <main className="app-shell">
+    <main className="app-shell cosmic-shell" onPointerMove={followPointer}>
+      <div className="ambient-field" aria-hidden="true"><i /><i /><i /></div>
       <header className="topbar">
         <a className="brand" href="#top" aria-label="前哨首页">
-          <span className="brand-mark" aria-hidden="true">前</span>
-          <span><strong>前哨</strong><small>MARKET SIGNAL DESK</small></span>
+          <span className="brand-mark" aria-hidden="true"><i /></span>
+          <span><strong>前哨</strong><small>MARKET OBSERVATORY</small></span>
         </a>
         <nav className="module-nav" aria-label="应用板块">
-          <button className={module === "signals" ? "is-active" : ""} onClick={() => setModule("signals")}>情报雷达</button>
-          <button className={module === "prices" ? "is-active" : ""} onClick={() => setModule("prices")}>行情入门</button>
+          <button className={module === "signals" ? "is-active" : ""} onClick={() => setModule("signals")}><span>情报雷达</span></button>
+          <button className={module === "prices" ? "is-active" : ""} onClick={() => setModule("prices")}><span>行情入门</span></button>
         </nav>
         <div className="top-actions">
           <div className="market-clock" aria-label="数据状态">
@@ -125,149 +146,172 @@ export function MarketDashboard() {
       <section className="market-pulse" aria-label="主要市场脉冲">
         <div className="pulse-live">
           <span className={error ? "status-dot status-dot--warn" : "status-dot"} />
-          <strong>{error ? "数据延迟" : "市场脉冲"}</strong>
+          <strong>{error ? "数据延迟" : "LIVE PULSE"}</strong>
         </div>
-        <div className="pulse-track">
-          {indices.length ? indices.map((quote) => (
-            <span className="pulse-quote" key={quote.id}>
-              <b>{quote.name}</b>
-              <span>{displayNumber(quote.value)}</span>
-              <i className={(quote.changePct ?? 0) >= 0 ? "positive" : "negative"}>
-                {(quote.changePct ?? 0) >= 0 ? "+" : ""}{quote.changePct?.toFixed(2)}%
-              </i>
-            </span>
-          )) : <span className="pulse-placeholder">正在连接沪、港、美三地市场</span>}
+        <div className="pulse-window">
+          <div className="pulse-track">
+            {indices.length ? [...indices, ...indices].map((quote, index) => (
+              <span className="pulse-quote" key={`${quote.id}-${index}`} aria-hidden={index >= indices.length}>
+                <b>{quote.name}</b>
+                <span>{displayNumber(quote.value)}</span>
+                <i className={(quote.changePct ?? 0) >= 0 ? "positive" : "negative"}>
+                  {(quote.changePct ?? 0) >= 0 ? "+" : ""}{quote.changePct?.toFixed(2)}%
+                </i>
+              </span>
+            )) : <span className="pulse-placeholder">正在连接沪、港、美三地市场</span>}
+          </div>
         </div>
         <span className="pulse-stamp">{lastUpdated ? lastUpdated.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) : "--:--"}</span>
       </section>
 
       {module === "signals" ? (
         <>
-      <section className="command-strip" id="top">
-        <div>
-          <p className="eyebrow">PERSONAL MARKET INTELLIGENCE</p>
-          <h1>只看与你有关的<br /><em>市场信号</em></h1>
-        </div>
-        <p className="intro">先关注公司本身，再看产业链、所属指数与海外映射。信息按关系远近排队，不让噪音抢走你的注意力。</p>
-        <div className="radar-summary" aria-label="今日雷达摘要">
-          <span>今日雷达</span>
-          <strong>{signals.length.toString().padStart(2, "0")}</strong>
-          <small>条关联信号</small>
-          <div className="priority-spectrum" aria-hidden="true">
-            {[1, 2, 3, 4].map((level) => (
-              <i key={level} style={{ flex: Math.max(1, signals.filter((signal) => signal.priority === level).length) }} />
-            ))}
-          </div>
-          <p>P1–P4 按与你的关系远近排序</p>
-        </div>
-      </section>
+          <section className="hero-observatory" id="top">
+            <div className="hero-copy">
+              <p className="eyebrow"><span /> PERSONAL MARKET INTELLIGENCE</p>
+              <h1>把市场噪音<br />压缩成<em>信号</em></h1>
+              <p className="intro">公司披露、产业链异动、指数脉冲与海外映射，沿着与你的距离进入同一条观察轨道。</p>
+              <div className="hero-actions">
+                <a className="primary-action" href="#signal-feed">进入今日信号 <span>↘</span></a>
+                <span className="live-caption"><i /> 每 60 秒重新扫描</span>
+              </div>
+            </div>
+            <div className="signal-vortex" aria-label={`今日发现 ${signals.length} 条关联信号`}>
+              <div className="vortex-halo halo-a" />
+              <div className="vortex-halo halo-b" />
+              <div className="vortex-halo halo-c" />
+              <div className="vortex-axis axis-x" />
+              <div className="vortex-axis axis-y" />
+              {[1, 2, 3, 4].map((level) => (
+                <span className={`vortex-node node-${level}`} key={level}>P{level}</span>
+              ))}
+              <div className="vortex-core">
+                <span>今日信号</span>
+                <strong>{signals.length.toString().padStart(2, "0")}</strong>
+                <small>LIVE</small>
+              </div>
+            </div>
+            <div className="hero-coordinate" aria-hidden="true"><span>CN / HK / US</span><span>31.2304° N · 121.4737° E</span></div>
+          </section>
 
-      <div className="dashboard-grid">
-        <aside className="watch-panel">
-          <div className="section-heading">
-            <span>01</span><div><h2>我的关注</h2><p>6 个标的 · 3 个市场</p></div>
-          </div>
-          <button data-watch-id="all" className={`watch-item watch-item--all ${selected === "all" ? "is-active" : ""}`} onClick={() => setSelected("all")}>
-            <span className="watch-avatar">全</span><span><strong>全部情报</strong><small>按优先级汇总</small></span><b>{signals.length}</b>
-          </button>
-          <div className="watch-list">
+          <section className="watch-orbit" aria-label="我的关注标的">
+            <div className="orbit-label"><span>TRACKING</span><strong>我的关注轨道</strong></div>
+            <button data-watch-id="all" className={`watch-chip watch-chip--all ${selected === "all" ? "is-active" : ""}`} onClick={() => setSelected("all")}>
+              <span>全部</span><strong>{signals.length}</strong>
+            </button>
             {watchlist.map((item) => {
               const quote = quoteMap.get(item.id);
               return (
-                <button data-watch-id={item.id} className={`watch-item ${selected === item.id ? "is-active" : ""}`} key={item.id} onClick={() => setSelected(item.id)}>
-                  <span className={`watch-avatar tone-${item.tone}`}>{item.name.slice(0, 1)}</span>
-                  <span><strong>{item.name}</strong><small>{item.symbol} · {item.market}</small></span>
+                <button data-watch-id={item.id} className={`watch-chip ${selected === item.id ? "is-active" : ""}`} key={item.id} onClick={() => setSelected(item.id)}>
+                  <span className={`watch-glyph tone-${item.tone}`}>{item.name.slice(0, 1)}</span>
+                  <span><strong>{item.name}</strong><small>{item.symbol}</small></span>
                   {quote ? (
                     <b className={(quote.changePct ?? 0) >= 0 ? "positive" : "negative"}>
                       {(quote.changePct ?? 0) >= 0 ? "+" : ""}{quote.changePct?.toFixed(2)}%
                     </b>
-                  ) : item.id === "spacex" ? <b className="private-label">新闻</b> : <b className="muted">—</b>}
+                  ) : <b className="private-label">NEWS</b>}
                 </button>
               );
             })}
-          </div>
-          <div className="future-slot">
-            <span>下一观察位</span><strong>长鑫存储</strong><p>正式上市并确认交易代码后接入，不提前填入猜测代码。</p>
-          </div>
-        </aside>
+            <div className="future-chip"><span>COMING</span><strong>长鑫存储</strong></div>
+          </section>
 
-        <section className="signal-panel">
-          <div className="section-heading signal-heading">
-            <span>02</span>
-            <div><h2>信号队列</h2><p>{selected === "all" ? "全部关注标的" : watchlist.find((item) => item.id === selected)?.name}</p></div>
-            <div className="priority-tabs" aria-label="按优先级筛选">
-              {(["all", 1, 2, 3, 4] as const).map((level) => (
-                <button key={level} className={priority === level ? "is-active" : ""} onClick={() => setPriority(level)}>
-                  {level === "all" ? "全部" : `P${level}`}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="priority-legend">
-            <span><i className="p1" />P1 公司/官方</span><span><i className="p2" />P2 板块/产业链</span>
-            <span><i className="p3" />P3 指数</span><span><i className="p4" />P4 海外映射</span>
-          </div>
-
-          {error && <div className="data-notice">{error}</div>}
-          {loading ? (
-            <div className="signal-loading">{[1, 2, 3, 4].map((item) => <span key={item} />)}</div>
-          ) : filteredSignals.length ? (
-            <div className="signal-list">
-              {filteredSignals.map((signal) => (
-                <article className={`signal-card p${signal.priority} ${read.includes(signal.id) ? "is-read" : ""}`} key={signal.id}>
-                  <div className="priority-rail"><strong>P{signal.priority}</strong><span /></div>
-                  <div className="signal-body">
-                    <div className="signal-meta">
-                      <span className="actor-tag">{signal.actor}</span>
-                      {signal.official && <span className="official-tag">官方披露</span>}
-                      <span className="score-tag" title={signal.factors.join(" · ")}>相关度 {signal.score}</span>
-                      <span>{signal.source}</span><time dateTime={signal.publishedAt}>{signalTime(signal.publishedAt)}</time>
-                    </div>
-                    <SignalTitle signal={signal} onOpen={() => openSignal(signal)} />
-                    <p><span>排序原因</span>{signal.reason}</p>
-                  </div>
-                  <button className={`save-button ${saved.includes(signal.id) ? "is-saved" : ""}`} onClick={() => toggleSaved(signal.id)} aria-label={saved.includes(signal.id) ? "取消收藏" : "收藏"}>
-                    {saved.includes(signal.id) ? "★" : "☆"}
-                  </button>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="empty-state"><strong>这一层暂时没有新信号</strong><p>换一个优先级或关注标的看看；系统不会为了填满列表而编造消息。</p></div>
-          )}
-        </section>
-
-        <aside className="pulse-panel">
-          <div className="section-heading"><span>03</span><div><h2>指数脉冲</h2><p>延迟行情 · 仅作观察</p></div></div>
-          <div className="index-stack">
-            {indices.map((quote, index) => (
-              <div className="index-card" key={quote.id}>
-                <div><span>0{index + 1}</span><small>{quote.market}</small></div>
-                <h3>{quote.name}</h3><strong>{displayNumber(quote.value)}</strong>
-                <p className={(quote.changePct ?? 0) >= 0 ? "positive" : "negative"}>{(quote.changePct ?? 0) >= 0 ? "▲" : "▼"} {Math.abs(quote.changePct ?? 0).toFixed(2)}%</p>
-                <div className="micro-chart" aria-hidden="true">
-                  {[35, 52, 44, 68, 58, 76, 72, 88].map((height, point) => <i key={point} style={{ height: `${height}%` }} />)}
+          <div className="mission-grid" id="signal-feed">
+            <section className="signal-panel">
+              <div className="section-heading signal-heading">
+                <div><span className="section-kicker">SIGNAL STREAM</span><h2>今日信号流</h2><p>{selected === "all" ? "全部关注标的" : watchlist.find((item) => item.id === selected)?.name}</p></div>
+                <div className="priority-tabs" aria-label="按优先级筛选">
+                  {(["all", 1, 2, 3, 4] as const).map((level) => (
+                    <button key={level} className={priority === level ? "is-active" : ""} onClick={() => setPriority(level)}>
+                      {level === "all" ? "ALL" : `P${level}`}
+                    </button>
+                  ))}
                 </div>
               </div>
-            ))}
-            {!loading && indices.length === 0 && <div className="index-unavailable">指数数据暂时不可用</div>}
+              <div className="priority-legend">
+                <span><i className="p1" />公司/官方</span><span><i className="p2" />板块/产业链</span>
+                <span><i className="p3" />指数</span><span><i className="p4" />海外映射</span>
+              </div>
+
+              {error && <div className="data-notice">{error}</div>}
+              {loading ? (
+                <div className="signal-loading">{[1, 2, 3, 4].map((item) => <span key={item} />)}</div>
+              ) : filteredSignals.length ? (
+                <div className="signal-list">
+                  {filteredSignals.map((signal) => {
+                    const expanded = expandedSignal === signal.id;
+                    return (
+                      <article
+                        className={`signal-card p${signal.priority} ${read.includes(signal.id) ? "is-read" : ""} ${expanded ? "is-expanded" : ""}`}
+                        key={signal.id}
+                        onPointerMove={tiltCard}
+                        onPointerLeave={resetTilt}
+                      >
+                        <div className="priority-rail"><strong>P{signal.priority}</strong><span /></div>
+                        <div className="signal-body">
+                          <div className="signal-meta">
+                            <span className="actor-tag">{signal.actor}</span>
+                            {signal.official && <span className="official-tag">官方披露</span>}
+                            <span className="score-tag" title={signal.factors.join(" · ")}>相关度 {signal.score}</span>
+                            <span>{signal.source}</span><time dateTime={signal.publishedAt}>{signalTime(signal.publishedAt)}</time>
+                          </div>
+                          <SignalTitle signal={signal} onOpen={() => openSignal(signal)} />
+                          <p><span>排序原因</span>{signal.reason}</p>
+                          <div className="signal-controls">
+                            <button className="signal-expander" aria-expanded={expanded} onClick={() => setExpandedSignal(expanded ? "" : signal.id)}>
+                              {expanded ? "收起判断依据" : "查看判断依据"} <span>{expanded ? "−" : "+"}</span>
+                            </button>
+                          </div>
+                          {expanded && (
+                            <div className="signal-insight">
+                              <span>WHY IT MATTERS</span>
+                              <div>{signal.factors.map((factor) => <i key={factor}>{factor}</i>)}</div>
+                            </div>
+                          )}
+                        </div>
+                        <button className={`save-button ${saved.includes(signal.id) ? "is-saved" : ""}`} onClick={() => toggleSaved(signal.id)} aria-label={saved.includes(signal.id) ? "取消收藏" : "收藏"}>
+                          {saved.includes(signal.id) ? "★" : "☆"}
+                        </button>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="empty-state"><strong>这一层暂时没有新信号</strong><p>换一个优先级或关注标的看看；系统不会为了填满列表而编造消息。</p></div>
+              )}
+            </section>
+
+            <aside className="pulse-panel">
+              <div className="section-heading"><div><span className="section-kicker">MARKET PULSE</span><h2>指数脉冲</h2><p>延迟行情 · 仅作观察</p></div></div>
+              <div className="index-stack">
+                {indices.map((quote, index) => (
+                  <div className="index-card" key={quote.id} onPointerMove={tiltCard} onPointerLeave={resetTilt}>
+                    <div><span>0{index + 1}</span><small>{quote.market}</small></div>
+                    <h3>{quote.name}</h3><strong>{displayNumber(quote.value)}</strong>
+                    <p className={(quote.changePct ?? 0) >= 0 ? "positive" : "negative"}>{(quote.changePct ?? 0) >= 0 ? "▲" : "▼"} {Math.abs(quote.changePct ?? 0).toFixed(2)}%</p>
+                    <div className="micro-chart" aria-hidden="true">
+                      {[35, 52, 44, 68, 58, 76, 72, 88].map((height, point) => <i key={point} style={{ height: `${height}%` }} />)}
+                    </div>
+                  </div>
+                ))}
+                {!loading && indices.length === 0 && <div className="index-unavailable">指数数据暂时不可用</div>}
+              </div>
+              <div className="source-panel">
+                <h3>原始信号源</h3><p>重要消息请回到监管披露原文核对。</p>
+                <div>{sourceLinks.map(([label, href]) => <a href={href} target="_blank" rel="noreferrer" key={label}>{label}<span>↗</span></a>)}</div>
+              </div>
+              <div className="saved-summary">
+                <span>COLLECTED</span><strong>{saved.length.toString().padStart(2, "0")}</strong><p>本机收藏</p>
+              </div>
+            </aside>
           </div>
-          <div className="source-panel">
-            <h3>一手来源快捷入口</h3><p>重要消息请回到监管披露原文核对。</p>
-            <div>{sourceLinks.map(([label, href]) => <a href={href} target="_blank" rel="noreferrer" key={label}>{label}<span>↗</span></a>)}</div>
-          </div>
-          <div className="saved-summary">
-            <span>本机已收藏</span><strong>{saved.length.toString().padStart(2, "0")}</strong><p>收藏与已读状态只保存在你的浏览器里。</p>
-          </div>
-        </aside>
-      </div>
         </>
       ) : (
         <BeginnerMarket quotes={quotes} loading={loading} />
       )}
 
       <footer>
-        <span>前哨 v1.5.0 · 数据可能延迟</span>
+        <span>前哨 v2.0.0 · MARKET OBSERVATORY</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>
