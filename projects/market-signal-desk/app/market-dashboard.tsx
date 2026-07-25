@@ -6,6 +6,13 @@ import { indexOrder, sourceLinks, watchlist, type Quote, type Signal } from "./m
 import { signalTime } from "./signal-presentation";
 import { SignalTitle } from "./signal-title";
 
+const priorityLabels = {
+  1: "公司与官方披露",
+  2: "板块与产业链",
+  3: "市场指数",
+  4: "海外映射",
+} as const;
+
 function displayNumber(value: number) {
   return new Intl.NumberFormat("zh-CN", {
     minimumFractionDigits: 2,
@@ -118,6 +125,8 @@ export function MarketDashboard() {
   }
 
   const indices = indexOrder.map((id) => quoteMap.get(id)).filter((quote): quote is Quote => Boolean(quote));
+  const priorityCounts = [1, 2, 3, 4].map((level) =>
+    signals.filter(({ priority: signalPriority }) => signalPriority === level).length);
   const dataTimestamp = lastUpdated?.toLocaleString("zh-CN", {
     month: "2-digit",
     day: "2-digit",
@@ -182,19 +191,30 @@ export function MarketDashboard() {
                 <span className="live-caption"><i /> 每 60 秒重新扫描</span>
               </div>
             </div>
-            <div className="signal-vortex" aria-label={`今日发现 ${signals.length} 条关联信号`}>
+            <div className="signal-vortex" aria-label={`交互式信号雷达，今日发现 ${signals.length} 条关联信号`}>
               <div className="vortex-halo halo-a" />
               <div className="vortex-halo halo-b" />
               <div className="vortex-halo halo-c" />
               <div className="vortex-axis axis-x" />
               <div className="vortex-axis axis-y" />
-              {[1, 2, 3, 4].map((level) => (
-                <span className={`vortex-node node-${level}`} key={level}>P{level}</span>
+              {([1, 2, 3, 4] as const).map((level, index) => (
+                <button
+                  className={`vortex-node node-${level} ${priority === level ? "is-active" : ""}`}
+                  key={level}
+                  onClick={() => setPriority(level)}
+                  aria-label={`只看 P${level} ${priorityLabels[level]}，共 ${priorityCounts[index]} 条`}
+                >
+                  <strong>P{level}</strong><small>{priorityCounts[index]}</small>
+                </button>
               ))}
-              <div className="vortex-core">
+              <button className={`vortex-core ${priority === "all" ? "is-active" : ""}`} onClick={() => setPriority("all")} aria-label="查看全部信号">
                 <span>今日信号</span>
                 <strong>{signals.length.toString().padStart(2, "0")}</strong>
-                <small>LIVE</small>
+                <small>点击看全部</small>
+              </button>
+              <div className="vortex-filter-state" aria-live="polite">
+                <span>当前雷达</span>
+                <strong>{priority === "all" ? "全部信号" : `P${priority} · ${priorityLabels[priority]}`}</strong>
               </div>
             </div>
             <div className="hero-coordinate" aria-hidden="true"><span>CN / HK / US</span><span>31.2304° N · 121.4737° E</span></div>
@@ -332,7 +352,7 @@ export function MarketDashboard() {
       )}
 
       <footer>
-        <span>前哨 v2.0.3 · MARKET OBSERVATORY</span>
+        <span>前哨 v2.0.4 · MARKET OBSERVATORY</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>
