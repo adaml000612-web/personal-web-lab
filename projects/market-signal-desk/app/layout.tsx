@@ -2,13 +2,20 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://frontier-signal-desk.adaml000612.chatgpt.site"),
   title: "前哨 · 投资情报雷达",
   description: "你的 A 股、港股、美股投资情报台。",
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
   openGraph: {
     title: "前哨 · 投资情报雷达",
     description: "把与你有关的公司、产业链、指数和海外映射信号排好队。",
-    images: ["/social-preview.png"],
+    images: ["/og-v2.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "前哨 · 投资情报雷达",
+    description: "把市场噪音压缩成与你有关的信号。",
+    images: ["/og-v2.png"],
   },
 };
 
