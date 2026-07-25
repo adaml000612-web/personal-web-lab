@@ -1151,7 +1151,7 @@ html, body { background: #f4f7f5; color: var(--text); }
   position: absolute;
   inset: 5%;
   border-radius: 50%;
-  animation: radarSweep 6s linear infinite;
+  animation: radarSweep 8s linear infinite;
 }
 .radar-sweep {
   z-index: 2;
@@ -1226,7 +1226,7 @@ html, body { background: #f4f7f5; color: var(--text); }
   border-radius: 50%;
   opacity: 0;
   transform: translate(-50%,-50%) scale(.2);
-  animation: rangePulse 6s ease-out infinite;
+  animation: rangePulse 8s ease-out infinite;
 }
 .radar-range-pulses i:nth-child(2) { animation-delay: -2s; }
 .radar-range-pulses i:nth-child(3) { animation-delay: -4s; }
@@ -1239,7 +1239,6 @@ html, body { background: #f4f7f5; color: var(--text); }
 .radar-echo {
   --echo-size: 9px;
   --echo-delay: 0s;
-  --echo-duration: 6s;
   position: absolute;
   z-index: 7;
   width: var(--echo-size);
@@ -1247,12 +1246,16 @@ html, body { background: #f4f7f5; color: var(--text); }
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: #0ba879;
+  background: currentColor;
   opacity: 0;
   transform: translate(-50%,-50%) scale(.15);
-  box-shadow: 0 0 0 0 rgba(11,168,121,.26), 0 0 13px rgba(9,135,98,.72);
+  box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 26%, transparent), 0 0 13px currentColor;
   cursor: pointer;
-  animation: radarEcho var(--echo-duration) ease-in-out var(--echo-delay) infinite;
+  animation-duration: 8s;
+  animation-timing-function: ease-out;
+  animation-delay: var(--echo-delay);
+  animation-iteration-count: infinite;
+  animation-fill-mode: backwards;
 }
 .radar-echo::after {
   content: "";
@@ -1270,15 +1273,30 @@ html, body { background: #f4f7f5; color: var(--text); }
   animation-play-state: paused;
   transform: translate(-50%,-50%) scale(1.65);
 }
-.radar-echo-p1 { color: #008e63; background: #00a978; }
-.radar-echo-p2 { color: #089aa4; background: #12aebb; }
-.radar-echo-p3 { color: #b47812; background: #d49a2f; }
-.radar-echo-p4 { color: #d74f79; background: #e66188; }
-@keyframes radarEcho {
-  0%, 18%, 100% { opacity: 0; transform: translate(-50%,-50%) scale(.15); }
-  25% { opacity: .22; transform: translate(-50%,-50%) scale(.65); }
-  36%, 64% { opacity: .95; transform: translate(-50%,-50%) scale(1); }
-  78% { opacity: .18; transform: translate(-50%,-50%) scale(1.45); box-shadow: 0 0 0 13px transparent, 0 0 18px currentColor; }
+.radar-echo-p1 { color: #ef476f; }
+.radar-echo-p2 { color: #f2a51a; }
+.radar-echo-p3 { color: #129bd2; }
+.radar-echo-p4 { color: #7658e8; }
+.radar-echo-hold-3 { animation-name: radarEcho3; }
+.radar-echo-hold-4 { animation-name: radarEcho4; }
+.radar-echo-hold-5 { animation-name: radarEcho5; }
+@keyframes radarEcho3 {
+  0%, 100% { opacity: 0; transform: translate(-50%,-50%) scale(.15); }
+  3% { opacity: 1; transform: translate(-50%,-50%) scale(1.15); }
+  31% { opacity: .94; transform: translate(-50%,-50%) scale(1); }
+  37.5% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); box-shadow: 0 0 0 14px transparent, 0 0 20px currentColor; }
+}
+@keyframes radarEcho4 {
+  0%, 100% { opacity: 0; transform: translate(-50%,-50%) scale(.15); }
+  3% { opacity: 1; transform: translate(-50%,-50%) scale(1.15); }
+  43.5% { opacity: .94; transform: translate(-50%,-50%) scale(1); }
+  50% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); box-shadow: 0 0 0 14px transparent, 0 0 20px currentColor; }
+}
+@keyframes radarEcho5 {
+  0%, 100% { opacity: 0; transform: translate(-50%,-50%) scale(.15); }
+  3% { opacity: 1; transform: translate(-50%,-50%) scale(1.15); }
+  56% { opacity: .94; transform: translate(-50%,-50%) scale(1); }
+  62.5% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); box-shadow: 0 0 0 14px transparent, 0 0 20px currentColor; }
 }
 @keyframes echoHalo {
   0% { opacity: .36; transform: scale(.25); }
@@ -1438,10 +1456,13 @@ footer { border-color: var(--line); color: #71817b; }
 
 /* The radar remains a slow functional status animation even when decorative motion is reduced. */
 @media (prefers-reduced-motion: reduce) {
-  .radar-sweep, .radar-afterglow { animation: radarSweep 12s linear infinite !important; }
-  .radar-range-pulses i { animation: rangePulse 12s ease-out infinite !important; }
-  .radar-range-pulses i:nth-child(2) { animation-delay: -4s !important; }
-  .radar-range-pulses i:nth-child(3) { animation-delay: -8s !important; }
-  .radar-echo { animation: radarEcho calc(var(--echo-duration) * 1.6) ease-in-out var(--echo-delay) infinite !important; }
+  .radar-sweep, .radar-afterglow { animation: radarSweep 8s linear infinite !important; animation-play-state: running !important; }
+  .radar-range-pulses i { animation: rangePulse 8s ease-out infinite !important; animation-play-state: running !important; }
+  .radar-range-pulses i:nth-child(2) { animation-delay: -2.66s !important; }
+  .radar-range-pulses i:nth-child(3) { animation-delay: -5.33s !important; }
+  .radar-echo { animation-duration: 8s !important; animation-timing-function: ease-out !important; animation-delay: var(--echo-delay) !important; animation-iteration-count: infinite !important; animation-play-state: running !important; }
+  .radar-echo-hold-3 { animation-name: radarEcho3 !important; }
+  .radar-echo-hold-4 { animation-name: radarEcho4 !important; }
+  .radar-echo-hold-5 { animation-name: radarEcho5 !important; }
   .radar-echo::after { animation: echoHalo 3.6s ease-out infinite !important; }
 }

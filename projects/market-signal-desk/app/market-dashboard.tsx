@@ -41,19 +41,20 @@ function resetTilt(event: ReactPointerEvent<HTMLElement>) {
 
 function radarEchoStyle(priority: number, index: number) {
   const rings = {
-    1: [13, 20],
-    2: [22, 29],
-    3: [31, 38],
-    4: [40, 47],
+    1: [12, 23],
+    2: [24, 33],
+    3: [34, 41],
+    4: [42, 48],
   } as const;
   const [inner, outer] = rings[priority as keyof typeof rings] ?? rings[4];
   const radius = inner + ((index * 7 + priority * 3) % (outer - inner + 1));
-  const angle = ((index * 137.5 + priority * 47) % 360) * Math.PI / 180;
+  const angleDegrees = (index * 137.5 + priority * 47) % 360;
+  const angle = angleDegrees * Math.PI / 180;
+  const sweepDelay = (((angleDegrees + 110) % 360) / 360) * 8;
   return {
     left: `${50 + Math.cos(angle) * radius}%`,
     top: `${50 + Math.sin(angle) * radius}%`,
-    "--echo-delay": `${-((index * 1.17 + priority * .63) % 8).toFixed(2)}s`,
-    "--echo-duration": `${(4.8 + ((index + priority) % 5) * .72).toFixed(2)}s`,
+    "--echo-delay": `${sweepDelay.toFixed(2)}s`,
     "--echo-size": `${7 + Math.round((index * 3 + priority) % 5)}px`,
   } as CSSProperties;
 }
@@ -119,7 +120,7 @@ export function MarketDashboard() {
         if (next === 0) void loadData(true);
         return next;
       });
-    }, 6_000);
+    }, 8_000);
     return () => {
       window.clearTimeout(timer);
       window.clearInterval(interval);
@@ -242,14 +243,14 @@ export function MarketDashboard() {
             </div>
           </div>
 
-          <div className="true-radar" aria-label={`实时情报雷达，共发现 ${signals.length} 条信号`}>
+          <div className="true-radar" key={lastUpdated?.getTime() ?? "radar-loading"} aria-label={`实时情报雷达，共发现 ${signals.length} 条信号`}>
             <div className="radar-grid" aria-hidden="true" />
             <div className="radar-range-pulses" aria-hidden="true"><i /><i /><i /></div>
             <div className="radar-sweep" aria-hidden="true" />
             <div className="radar-afterglow" aria-hidden="true" />
             {radarEchoes.map((signal, index) => (
               <button
-                className={`radar-echo radar-echo-p${signal.priority}`}
+                className={`radar-echo radar-echo-p${signal.priority} radar-echo-hold-${3 + (index % 3)}`}
                 key={signal.id}
                 style={radarEchoStyle(signal.priority, index)}
                 onClick={() => openRadarEcho(signal)}
@@ -423,7 +424,7 @@ export function MarketDashboard() {
       )}
 
       <footer>
-        <span>前哨 v2.1.1 · MARKET OBSERVATORY</span>
+        <span>前哨 v2.1.2 · MARKET OBSERVATORY</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>

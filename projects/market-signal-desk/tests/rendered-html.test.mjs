@@ -20,7 +20,7 @@ test("server-renders the market signal desk", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "市场正在发生什么", "LIVE PULSE", "v2.1.1", "实时情报雷达", "每 5 圈自动刷新新闻", "真实回波"]) {
+  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "市场正在发生什么", "LIVE PULSE", "v2.1.2", "实时情报雷达", "每 5 圈自动刷新新闻", "真实回波"]) {
     assert.match(html, new RegExp(content));
   }
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
@@ -42,5 +42,6 @@ test("keeps market coverage configurable and honest", async () => {
   assert.doesNotMatch(dashboard, /vortex-filter-state|把市场噪音/);
   assert.doesNotMatch(dashboard, /radar-target radar-target/);
   assert.match(dashboard, /radar-echo radar-echo-p/);
+  assert.match(dashboard, /radar-echo-hold-/);
   assert.doesNotMatch(beginnerMarket, /先看懂价格/);
 });
