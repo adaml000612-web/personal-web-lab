@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import type { KlinePeriod, KlinePoint } from "./kline";
 import { KlineChart } from "./kline-chart";
+import { buildMarketAnalysis } from "./market-analysis";
 import type { Quote } from "./market-config";
 
 const currencySymbol: Record<string, string> = { USD: "$", HKD: "HK$", CNY: "¥" };
@@ -30,6 +31,7 @@ export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes
     ?? stocks.find(({ symbol }) => symbol === initialSymbol)
     ?? stocks[0];
   const indices = quotes.filter(({ type }) => type === "index");
+  const marketAnalysis = buildMarketAnalysis(selected, indices);
 
   useEffect(() => {
     if (!selected) return;
@@ -108,15 +110,20 @@ export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes
 
       <aside className="beginner-guide beginner-guide--primary">
         <div className="section-heading">
-          <span>GUIDE</span>
-          <div><h2>新手先按这三步判断</h2><p>先理解今天发生了什么，再考虑是否交易</p></div>
+          <span>MARKET READ</span>
+          <div><h2>今日市场解读 · {marketAnalysis.headline}</h2><p>基于 {marketAnalysis.snapshotTime} 的真实行情自动计算，数据变化时结论也会变化</p></div>
         </div>
         <ol>
-          <li><strong>先看涨跌幅</strong><p>确认今天相对昨收上涨还是下跌，以及变化幅度是否异常。</p></li>
-          <li><strong>再看高低区间</strong><p>现价靠近今日最高说明当日偏强；靠近最低则说明当日偏弱。</p></li>
-          <li><strong>最后核对消息</strong><p>价格异动可能来自公告、财报或行业消息，切回情报雷达查原因。</p></li>
+          {marketAnalysis.insights.map((insight) => (
+            <li className={`analysis-${insight.tone}`} key={insight.title}>
+              <strong>{insight.title}</strong>
+              <p>{insight.detail}</p>
+              <small>{insight.evidence}</small>
+            </li>
+          ))}
         </ol>
-        <div className="delay-note"><strong>数据说明</strong><p>页面每 60 秒刷新，但第三方行情可能延迟，不应用作下单报价。</p></div>
+        <div className="market-conclusion"><strong>综合判断</strong><p>{marketAnalysis.summary}</p></div>
+        <div className="delay-note"><strong>分析边界</strong><p>页面每 60 秒刷新；第三方行情可能延迟。以上是可复核的数据解读，不构成投资建议或下单依据。</p></div>
       </aside>
 
       <div className="quote-layout">

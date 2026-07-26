@@ -954,9 +954,32 @@ h1 em {
 .beginner-guide--primary li::before { left: 12px; top: 20px; width: 34px; height: 34px; font-size: 10px; }
 .beginner-guide--primary li strong { font-size: 16px; }
 .beginner-guide--primary li p { margin-top: 8px; font-size: 13px; line-height: 1.65; }
+.beginner-guide--primary li small {
+  display: block;
+  margin-top: 10px;
+  color: #244f43;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+.beginner-guide--primary li.analysis-positive::before { border-color: rgba(16,151,111,.38); color: #087c5a; background: rgba(16,151,111,.08); }
+.beginner-guide--primary li.analysis-negative::before { border-color: rgba(221,71,98,.34); color: #c53550; background: rgba(221,71,98,.07); }
+.market-conclusion {
+  margin-top: 14px;
+  padding: 15px 17px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 14px;
+  border: 1px solid rgba(20,120,92,.2);
+  border-radius: 14px;
+  background: linear-gradient(90deg, rgba(20,120,92,.1), rgba(20,120,92,.035));
+}
+.market-conclusion strong { color: #0a6f52; font-size: 12px; white-space: nowrap; }
+.market-conclusion p { margin: 0; color: #173f35 !important; font-size: 13px; font-weight: 620; line-height: 1.65; }
 .beginner-guide--primary .delay-note {
   max-width: none;
-  margin-top: 14px;
+  margin-top: 8px;
   padding: 10px 13px;
   display: flex;
   align-items: baseline;
@@ -1538,6 +1561,7 @@ footer { border-color: var(--line); color: #71817b; }
   .beginner-guide--primary li + li { border-left: 0; border-top: 1px solid var(--line); }
   .beginner-guide--primary li::before { left: 8px; top: 18px; }
   .beginner-guide--primary .delay-note { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .market-conclusion { grid-template-columns: 1fr; gap: 5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
