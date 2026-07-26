@@ -786,7 +786,7 @@ h1 em {
   width: min(1500px, calc(100% - 44px));
   margin: 0 auto 70px;
   display: grid;
-  grid-template-columns: 230px minmax(0, 1fr) 280px;
+  grid-template-columns: 230px minmax(0, 1fr);
   gap: 22px;
   align-items: start;
 }
@@ -922,6 +922,48 @@ h1 em {
 .delay-note { margin-top: 18px; padding: 16px; border: 1px solid rgba(255,200,87,.25); border-radius: 14px; background: rgba(255,200,87,.07); }
 .delay-note strong { color: var(--gold); font-size: 10px; }
 .delay-note p { margin: 6px 0 0; color: #82775f; font-size: 8px; line-height: 1.6; }
+.beginner-guide--primary {
+  width: min(1500px, calc(100% - 44px));
+  margin: 28px auto 0;
+  padding: 24px 26px 18px;
+  border-left: 4px solid var(--mint);
+  border-radius: 20px;
+}
+.beginner-guide--primary .section-heading { align-items: center; justify-content: flex-start; flex-direction: row; }
+.beginner-guide--primary .section-heading > span {
+  width: auto;
+  height: 28px;
+  padding: 0 10px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(20,120,92,.24);
+  border-radius: 999px;
+  color: #14785c;
+  font-size: 9px;
+}
+.beginner-guide--primary .section-heading h2 { font-size: 24px; letter-spacing: -.025em; }
+.beginner-guide--primary .section-heading p { margin-top: 5px; font-size: 13px; }
+.beginner-guide--primary ol {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  border-block: 1px solid var(--line);
+}
+.beginner-guide--primary li { min-height: 112px; padding: 20px 22px 18px 55px; border-top: 0; }
+.beginner-guide--primary li + li { border-left: 1px solid var(--line); }
+.beginner-guide--primary li::before { left: 12px; top: 20px; width: 34px; height: 34px; font-size: 10px; }
+.beginner-guide--primary li strong { font-size: 16px; }
+.beginner-guide--primary li p { margin-top: 8px; font-size: 13px; line-height: 1.65; }
+.beginner-guide--primary .delay-note {
+  max-width: none;
+  margin-top: 14px;
+  padding: 10px 13px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.beginner-guide--primary .delay-note strong { font-size: 11px; white-space: nowrap; }
+.beginner-guide--primary .delay-note p { margin: 0; font-size: 10px; }
 .index-ticker { display: none; }
 
 footer {
@@ -1448,6 +1490,7 @@ html, body { background: #f4f7f5; color: var(--text); }
 .stock-search input { color: #24483d; }
 .stock-search button { background: #176f5a; }
 .quote-layout { margin-top: 28px; }
+.beginner-guide--primary + .quote-layout { margin-top: 16px; }
 .quote-option { border-color: var(--line); color: #32564c; }
 .quote-option b { font-size: 16px; }
 .hero-quote { background: #fff; }
@@ -1488,6 +1531,13 @@ footer { border-color: var(--line); color: #71817b; }
   .detail-header, .price-intro--compact { width: calc(100% - 28px); padding-top: 42px; grid-template-columns: 1fr; }
   .detail-header > span { justify-self: start; }
   .price-intro--compact h1 { font-size: 46px; }
+  .beginner-guide--primary { width: calc(100% - 28px); padding: 20px 16px 14px; }
+  .beginner-guide--primary .section-heading { align-items: flex-start; flex-direction: column; }
+  .beginner-guide--primary ol { grid-template-columns: 1fr; }
+  .beginner-guide--primary li { min-height: 0; padding: 18px 10px 18px 52px; }
+  .beginner-guide--primary li + li { border-left: 0; border-top: 1px solid var(--line); }
+  .beginner-guide--primary li::before { left: 8px; top: 18px; }
+  .beginner-guide--primary .delay-note { align-items: flex-start; flex-direction: column; gap: 4px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

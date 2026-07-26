@@ -106,6 +106,19 @@ export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes
         </div>
       </header>
 
+      <aside className="beginner-guide beginner-guide--primary">
+        <div className="section-heading">
+          <span>GUIDE</span>
+          <div><h2>新手先按这三步判断</h2><p>先理解今天发生了什么，再考虑是否交易</p></div>
+        </div>
+        <ol>
+          <li><strong>先看涨跌幅</strong><p>确认今天相对昨收上涨还是下跌，以及变化幅度是否异常。</p></li>
+          <li><strong>再看高低区间</strong><p>现价靠近今日最高说明当日偏强；靠近最低则说明当日偏弱。</p></li>
+          <li><strong>最后核对消息</strong><p>价格异动可能来自公告、财报或行业消息，切回情报雷达查原因。</p></li>
+        </ol>
+        <div className="delay-note"><strong>数据说明</strong><p>页面每 60 秒刷新，但第三方行情可能延迟，不应用作下单报价。</p></div>
+      </aside>
+
       <div className="quote-layout">
         <aside className="quote-picker">
           <div className="section-heading"><span>01</span><div><h2>选择股票</h2><p>关注列表与查询结果</p></div></div>
@@ -186,15 +199,6 @@ export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes
           ) : <div className="empty-state"><strong>行情正在连接</strong><p>如果暂时没有数据，请稍后刷新。</p></div>}
         </div>
 
-        <aside className="beginner-guide">
-          <div className="section-heading"><span>03</span><div><h2>新手先看这三点</h2><p>价格不是买入理由</p></div></div>
-          <ol>
-            <li><strong>先看涨跌幅</strong><p>它表示相对昨收的变化，不代表明天还会按同一方向走。</p></li>
-            <li><strong>再看高低区间</strong><p>当前价靠近今日最高，说明当日相对强；靠近最低则相对弱。</p></li>
-            <li><strong>最后核对消息</strong><p>价格异动可能来自公告、财报或行业消息，可切回情报雷达查看。</p></li>
-          </ol>
-          <div className="delay-note"><strong>关于“实时”</strong><p>页面每 60 秒自动刷新，但第三方行情可能延迟，不应用作下单报价。</p></div>
-        </aside>
       </div>
 
       <div className="index-ticker" aria-label="主要指数">
