@@ -243,8 +243,8 @@ export function MarketDashboard() {
       <div className="ambient-field" aria-hidden="true"><i /><i /><i /></div>
       <header className="topbar">
         <a className="brand" href="#top" aria-label="前哨首页" onClick={() => setModule("home")}>
-          <span className="brand-mark" aria-hidden="true"><i /></span>
-          <span><strong>前哨</strong><small>MARKET OBSERVATORY</small></span>
+          <span className="brand-tiles" aria-hidden="true"><i>前</i><i>哨</i></span>
+          <span className="brand-scope"><strong>沪 · 港 · 美</strong><small>市场信号台</small></span>
         </a>
         <nav className="module-nav" aria-label="应用板块">
           <button className={module === "home" || module === "signals" ? "is-active" : ""} onClick={() => setModule("home")}><span>情报雷达</span></button>
@@ -494,7 +494,7 @@ export function MarketDashboard() {
       )}
 
       <footer>
-          <span>前哨 v2.5.0 · MARKET OBSERVATORY</span>
+          <span>前哨 v2.5.1 · MARKET SIGNAL DESK</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>
