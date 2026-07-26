@@ -40,7 +40,20 @@ function resetTilt(event: ReactPointerEvent<HTMLElement>) {
   event.currentTarget.style.setProperty("--tilt-y", "0deg");
 }
 
-function radarEchoStyle(priority: number, index: number) {
+function randomUnit(seed: number) {
+  let value = seed + 0x6d2b79f5;
+  value = Math.imul(value ^ value >>> 15, value | 1);
+  value ^= value + Math.imul(value ^ value >>> 7, value | 61);
+  return ((value ^ value >>> 14) >>> 0) / 4_294_967_296;
+}
+
+function createRadarSeed() {
+  const values = new Uint32Array(1);
+  crypto.getRandomValues(values);
+  return values[0];
+}
+
+function radarEchoStyle(priority: number, index: number, seed: number) {
   const rings = {
     1: [12, 23],
     2: [24, 33],
@@ -48,8 +61,12 @@ function radarEchoStyle(priority: number, index: number) {
     4: [42, 48],
   } as const;
   const [inner, outer] = rings[priority as keyof typeof rings] ?? rings[4];
-  const radius = inner + ((index * 7 + priority * 3) % (outer - inner + 1));
-  const angleDegrees = (index * 137.5 + priority * 47) % 360;
+  const echoSeed = seed ^ Math.imul(priority + 1, 0x9e3779b1) ^ Math.imul(index + 1, 0x85ebca6b);
+  const radius = inner + randomUnit(echoSeed) * (outer - inner);
+  const segment = 360 / 7;
+  const ringOffset = randomUnit(seed ^ Math.imul(priority, 0x27d4eb2d)) * 360;
+  const jitter = (randomUnit(echoSeed ^ 0xc2b2ae35) - .5) * segment * .72;
+  const angleDegrees = (ringOffset + index * segment + jitter + 360) % 360;
   const angle = angleDegrees * Math.PI / 180;
   const sweepDelay = (((angleDegrees + 110) % 360) / 360) * 8;
   return {
@@ -74,6 +91,7 @@ export function MarketDashboard() {
   const [expandedSignal, setExpandedSignal] = useState("");
   const [focusedSymbol, setFocusedSymbol] = useState("");
   const [scanCount, setScanCount] = useState(0);
+  const [radarSeed, setRadarSeed] = useState(0);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
@@ -91,7 +109,10 @@ export function MarketDashboard() {
   }, []);
 
   const loadData = useCallback(async (manual = false) => {
-    if (manual) setRefreshing(true);
+    if (manual) {
+      setRefreshing(true);
+      setRadarSeed(createRadarSeed());
+    }
     setError("");
     try {
       const [marketResponse, newsResponse] = await Promise.all([
@@ -114,8 +135,12 @@ export function MarketDashboard() {
   }, []);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => void loadData(), 0);
+    const timer = window.setTimeout(() => {
+      setRadarSeed(createRadarSeed());
+      void loadData();
+    }, 0);
     const interval = window.setInterval(() => {
+      setRadarSeed(createRadarSeed());
       setScanCount((current) => {
         const next = (current + 1) % 5;
         if (next === 0) void loadData(true);
@@ -260,7 +285,7 @@ export function MarketDashboard() {
             </div>
           </div>
 
-          <div className="true-radar" key={lastUpdated?.getTime() ?? "radar-loading"} aria-label={`实时情报雷达，共发现 ${signals.length} 条信号`}>
+          <div className="true-radar" key={`${lastUpdated?.getTime() ?? "radar-loading"}-${radarSeed}`} aria-label={`实时情报雷达，共发现 ${signals.length} 条信号`}>
             <div className="radar-grid" aria-hidden="true" />
             <div className="radar-range-pulses" aria-hidden="true"><i /><i /><i /></div>
             <div className="radar-sweep" aria-hidden="true" />
@@ -269,7 +294,7 @@ export function MarketDashboard() {
               <button
                 className={`radar-echo radar-echo-p${signal.priority} radar-echo-hold-${3 + (index % 3)}`}
                 key={signal.id}
-                style={radarEchoStyle(signal.priority, index)}
+                style={radarEchoStyle(signal.priority, index, radarSeed)}
                 onClick={() => openRadarEcho(signal)}
                 aria-label={`打开 P${signal.priority} 情报：${signal.title}`}
                 title={`P${signal.priority} · ${signal.actor}`}
@@ -441,7 +466,7 @@ export function MarketDashboard() {
       )}
 
       <footer>
-        <span>前哨 v2.2.1 · MARKET OBSERVATORY</span>
+        <span>前哨 v2.2.2 · MARKET OBSERVATORY</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>
