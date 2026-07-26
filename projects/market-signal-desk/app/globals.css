@@ -208,10 +208,10 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .pulse-track {
   width: max-content;
   display: flex;
-  gap: 62px;
-  padding-left: 40px;
   animation: ticker 28s linear infinite;
+  will-change: transform;
 }
+.pulse-group { flex: none; display: flex; align-items: center; gap: 62px; padding-left: 40px; }
 .pulse-window:hover .pulse-track { animation-play-state: paused; }
 @keyframes ticker { to { transform: translateX(-50%); } }
 .pulse-quote { display: inline-flex; align-items: baseline; gap: 10px; white-space: nowrap; font: var(--font-floor) var(--mono); }
@@ -1045,7 +1045,7 @@ footer p { margin: 0; text-align: center; }
   .brand-mark { width: 38px; height: 38px; }
   .pulse-live { padding-left: 15px; padding-right: 14px; }
   .pulse-live strong { display: none; }
-  .pulse-track { gap: 40px; padding-left: 24px; }
+  .pulse-group { gap: 40px; padding-left: 24px; }
   .hero-observatory { padding-top: 58px; }
   h1, .price-intro h1 { font-size: clamp(48px, 15vw, 68px); }
   .intro { font-size: var(--font-floor); }
@@ -1150,7 +1150,8 @@ html, body { background: #f4f7f5; color: var(--text); }
 .pulse-live strong, .pulse-quote b { color: #29483f; }
 .pulse-quote > span, .pulse-stamp { color: #718079; }
 .pulse-quote i { background: #eef4f1; }
-.pulse-track { gap: 72px; padding-left: 72px; animation-duration: 24s; }
+.pulse-track { animation-duration: 24s; }
+.pulse-group { gap: 72px; padding-left: 72px; }
 .pulse-window:focus-within .pulse-track { animation-play-state: paused; }
 
 .radar-home {
@@ -1579,8 +1580,10 @@ footer { border-color: var(--line); color: #71817b; }
   .signal-card, .index-card { transform: none !important; }
 }
 
-/* The radar remains a slow functional status animation even when decorative motion is reduced. */
+/* Functional market motion remains slow and readable even when decorative motion is reduced. */
 @media (prefers-reduced-motion: reduce) {
+  .pulse-track { animation: ticker 40s linear infinite !important; animation-play-state: running !important; }
+  .pulse-window:hover .pulse-track, .pulse-window:focus-within .pulse-track { animation-play-state: paused !important; }
   .radar-sweep, .radar-afterglow { animation: radarSweep 8s linear infinite !important; animation-play-state: running !important; }
   .radar-range-pulses i { animation: rangePulse 8s ease-out infinite !important; animation-play-state: running !important; }
   .radar-range-pulses i:nth-child(2) { animation-delay: -2.66s !important; }

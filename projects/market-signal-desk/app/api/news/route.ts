@@ -9,6 +9,8 @@ import {
 } from "../../market-config";
 import { rankSignals } from "../../ranking";
 
+const SOURCE_TIMEOUT_MS = 3000;
+
 export const dynamic = "force-dynamic";
 
 function safeUrl(value: string) {
@@ -69,7 +71,7 @@ async function fetchNasdaq(source: (typeof nasdaqSources)[number]): Promise<RawS
   const response = await fetch(`https://www.nasdaq.com/feed/rssoutbound?symbol=${symbol}`, {
     headers: { "User-Agent": "Mozilla/5.0 MarketSignalDesk/1.0" },
     cache: "no-store",
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(SOURCE_TIMEOUT_MS),
   });
   if (!response.ok) throw new Error(`nasdaq ${response.status}`);
   const signals = parseRss(await response.text(), {
@@ -94,7 +96,7 @@ async function fetchTencentAnnouncements(): Promise<RawSignal[]> {
   const response = await fetch("https://www.tencent.com.cn/zh-cn/investors/announcements.html", {
     headers: { "User-Agent": "Mozilla/5.0 MarketSignalDesk/1.0" },
     cache: "no-store",
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(SOURCE_TIMEOUT_MS),
   });
   if (!response.ok) throw new Error(`tencent ${response.status}`);
   const html = await response.text();
@@ -126,7 +128,7 @@ async function fetchInnolightAnnouncements(): Promise<RawSignal[]> {
   const response = await fetch(`https://np-anotice-stock.eastmoney.com/api/security/ann?${params.toString()}`, {
     headers: { "User-Agent": "Mozilla/5.0 MarketSignalDesk/1.0" },
     cache: "no-store",
-    signal: AbortSignal.timeout(10000),
+    signal: AbortSignal.timeout(SOURCE_TIMEOUT_MS),
   });
   if (!response.ok) throw new Error(`eastmoney ${response.status}`);
   const payload = await response.json();
@@ -156,7 +158,7 @@ async function fetchSecFilings(): Promise<RawSignal[]> {
     const response = await fetch(`https://data.sec.gov/submissions/CIK${cik}.json`, {
       headers: { "User-Agent": "MarketSignalDesk contact@example.com", Accept: "application/json" },
       cache: "no-store",
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(SOURCE_TIMEOUT_MS),
     });
     if (!response.ok) throw new Error(`sec ${response.status}`);
     const payload = await response.json();

@@ -100,9 +100,23 @@ export function MarketDashboard() {
       try {
         setSaved(JSON.parse(localStorage.getItem("msd-saved") ?? "[]"));
         setRead(JSON.parse(localStorage.getItem("msd-read") ?? "[]"));
+        const marketCache = JSON.parse(localStorage.getItem("msd-market-cache") ?? "null");
+        const newsCache = JSON.parse(localStorage.getItem("msd-news-cache") ?? "null");
+        if (Array.isArray(marketCache?.items)) {
+          setQuotes(marketCache.items);
+          setUnavailable(marketCache.unavailable ?? []);
+          setLastUpdated(new Date(marketCache.fetchedAt));
+        }
+        if (Array.isArray(newsCache?.signals)) {
+          setSignals(newsCache.signals);
+          setLastUpdated(new Date(newsCache.fetchedAt));
+          setLoading(false);
+        }
       } catch {
         localStorage.removeItem("msd-saved");
         localStorage.removeItem("msd-read");
+        localStorage.removeItem("msd-market-cache");
+        localStorage.removeItem("msd-news-cache");
       }
     }, 0);
     return () => window.clearTimeout(timer);
@@ -115,17 +129,27 @@ export function MarketDashboard() {
     }
     setError("");
     try {
-      const [marketResponse, newsResponse] = await Promise.all([
-        fetch("/api/market", { cache: "no-store" }),
-        fetch("/api/news", { cache: "no-store" }),
-      ]);
-      if (!marketResponse.ok || !newsResponse.ok) throw new Error("数据服务暂时不可用");
-      const marketData = await marketResponse.json();
-      const newsData = await newsResponse.json();
-      setQuotes(marketData.items ?? []);
-      setUnavailable(marketData.unavailable ?? []);
-      setSignals(newsData.signals ?? []);
-      setLastUpdated(new Date(newsData.fetchedAt ?? marketData.fetchedAt ?? Date.now()));
+      const cacheMode: RequestCache = manual ? "no-store" : "default";
+      const refreshQuery = manual ? `?refresh=${Date.now()}` : "";
+      const marketTask = (async () => {
+        const response = await fetch(`/api/market${refreshQuery}`, { cache: cacheMode });
+        if (!response.ok) throw new Error("行情服务暂时不可用");
+        const data = await response.json();
+        setQuotes(data.items ?? []);
+        setUnavailable(data.unavailable ?? []);
+        setLastUpdated(new Date(data.fetchedAt ?? Date.now()));
+        localStorage.setItem("msd-market-cache", JSON.stringify(data));
+      })();
+      const newsTask = (async () => {
+        const response = await fetch(`/api/news${refreshQuery}`, { cache: cacheMode });
+        if (!response.ok) throw new Error("新闻服务暂时不可用");
+        const data = await response.json();
+        setSignals(data.signals ?? []);
+        setLastUpdated(new Date(data.fetchedAt ?? Date.now()));
+        localStorage.setItem("msd-news-cache", JSON.stringify(data));
+      })();
+      const results = await Promise.allSettled([marketTask, newsTask]);
+      if (results.every(({ status }) => status === "rejected")) throw new Error("数据服务暂时不可用");
     } catch {
       setError("暂时没有拉到最新数据，请稍后再刷新。页面不会用虚构数据填充。");
     } finally {
@@ -245,14 +269,18 @@ export function MarketDashboard() {
         </div>
         <div className="pulse-window">
           <div className="pulse-track">
-            {indices.length ? [...indices, ...indices].map((quote, index) => (
-              <span className="pulse-quote" key={`${quote.id}-${index}`} aria-hidden={index >= indices.length}>
-                <b>{quote.name}</b>
-                <span>{displayNumber(quote.value)}</span>
-                <i className={(quote.changePct ?? 0) >= 0 ? "positive" : "negative"}>
-                  {(quote.changePct ?? 0) >= 0 ? "+" : ""}{quote.changePct?.toFixed(2)}%
-                </i>
-              </span>
+            {indices.length ? [0, 1].map((copy) => (
+              <div className="pulse-group" key={copy} aria-hidden={copy === 1}>
+                {indices.map((quote) => (
+                  <span className="pulse-quote" key={`${quote.id}-${copy}`}>
+                    <b>{quote.name}</b>
+                    <span>{displayNumber(quote.value)}</span>
+                    <i className={(quote.changePct ?? 0) >= 0 ? "positive" : "negative"}>
+                      {(quote.changePct ?? 0) >= 0 ? "+" : ""}{quote.changePct?.toFixed(2)}%
+                    </i>
+                  </span>
+                ))}
+              </div>
             )) : <span className="pulse-placeholder">正在连接沪、港、美三地市场</span>}
           </div>
         </div>
@@ -466,7 +494,7 @@ export function MarketDashboard() {
       )}
 
       <footer>
-          <span>前哨 v2.4.1 · MARKET OBSERVATORY</span>
+          <span>前哨 v2.5.0 · MARKET OBSERVATORY</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>
