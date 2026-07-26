@@ -20,7 +20,7 @@ test("server-renders the market signal desk", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "今日重点", "全部信号", "公司级", "尚未阅读", "LIVE PULSE", "v2.5.1", "实时情报雷达", "每 5 圈自动刷新新闻"]) {
+  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "今日重点", "全部信号", "公司级", "尚未阅读", "LIVE PULSE", "v2.5.2", "实时情报雷达", "每 5 圈自动刷新新闻"]) {
     assert.match(html, new RegExp(content));
   }
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
@@ -59,5 +59,8 @@ test("keeps market coverage configurable and honest", async () => {
   assert.match(beginnerMarket, /今日市场解读/);
   assert.match(beginnerMarket, /真实行情自动计算/);
   assert.match(beginnerMarket, /marketAnalysis\.insights/);
+  assert.match(beginnerMarket, /我的关注/);
+  assert.match(beginnerMarket, /加入关注/);
+  assert.match(beginnerMarket, /msd-custom-watchlist/);
   assert.doesNotMatch(beginnerMarket, /先看懂价格/);
 });

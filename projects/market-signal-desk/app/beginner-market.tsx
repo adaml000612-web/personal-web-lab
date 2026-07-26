@@ -7,6 +7,7 @@ import { buildMarketAnalysis } from "./market-analysis";
 import type { Quote } from "./market-config";
 
 const currencySymbol: Record<string, string> = { USD: "$", HKD: "HK$", CNY: "¥" };
+const customWatchlistKey = "msd-custom-watchlist";
 
 function number(value: number | null, prefix = "") {
   return value === null ? "—" : `${prefix}${value.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -15,6 +16,7 @@ function number(value: number | null, prefix = "") {
 export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes: Quote[]; loading: boolean; initialSymbol?: string }) {
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState<Quote[]>([]);
+  const [customWatchlist, setCustomWatchlist] = useState<Quote[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
@@ -23,15 +25,45 @@ export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes
   const [klineLoading, setKlineLoading] = useState(false);
   const [klineError, setKlineError] = useState("");
 
-  const stocks = useMemo(() => {
-    const merged = [...searched, ...quotes.filter(({ type }) => type === "stock")];
+  const defaultWatchlist = useMemo(() => quotes.filter(({ type }) => type === "stock"), [quotes]);
+  const watchedStocks = useMemo(() => {
+    const merged = [...defaultWatchlist, ...customWatchlist];
     return [...new Map(merged.map((quote) => [quote.symbol, quote])).values()];
-  }, [quotes, searched]);
+  }, [customWatchlist, defaultWatchlist]);
+  const stocks = useMemo(() => {
+    const merged = [...searched, ...watchedStocks];
+    return [...new Map(merged.map((quote) => [quote.symbol, quote])).values()];
+  }, [searched, watchedStocks]);
   const selected = stocks.find(({ id }) => id === selectedId)
     ?? stocks.find(({ symbol }) => symbol === initialSymbol)
     ?? stocks[0];
+  const isWatched = selected ? watchedStocks.some(({ symbol }) => symbol === selected.symbol) : false;
   const indices = quotes.filter(({ type }) => type === "index");
   const marketAnalysis = buildMarketAnalysis(selected, indices);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    try {
+      const stored = JSON.parse(localStorage.getItem(customWatchlistKey) ?? "[]") as Quote[];
+      if (Array.isArray(stored)) {
+        setCustomWatchlist(stored);
+        const symbols = stored.map(({ symbol }) => symbol).join(",");
+        if (symbols) {
+          fetch(`/api/market?symbols=${encodeURIComponent(symbols)}`, { cache: "no-store", signal: controller.signal })
+            .then((response) => response.ok ? response.json() : null)
+            .then((data) => {
+              if (!data?.items?.length) return;
+              setCustomWatchlist(data.items);
+              localStorage.setItem(customWatchlistKey, JSON.stringify(data.items));
+            })
+            .catch(() => undefined);
+        }
+      }
+    } catch {
+      localStorage.removeItem(customWatchlistKey);
+    }
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     if (!selected) return;
@@ -78,6 +110,15 @@ export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes
     } finally {
       setSearching(false);
     }
+  }
+
+  function addSelectedToWatchlist() {
+    if (!selected || isWatched) return;
+    setCustomWatchlist((current) => {
+      const next = [...new Map([...current, selected].map((quote) => [quote.symbol, quote])).values()];
+      localStorage.setItem(customWatchlistKey, JSON.stringify(next));
+      return next;
+    });
   }
 
   const positive = (selected?.changePct ?? 0) >= 0;
@@ -128,8 +169,8 @@ export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes
 
       <div className="quote-layout">
         <aside className="quote-picker">
-          <div className="section-heading"><span>01</span><div><h2>选择股票</h2><p>关注列表与查询结果</p></div></div>
-          {loading && stocks.length === 0 ? <div className="quote-skeleton" /> : stocks.map((quote) => (
+          <div className="section-heading"><span>01</span><div><h2>我的关注</h2><p>默认关注与新增股票</p></div></div>
+          {loading && watchedStocks.length === 0 ? <div className="quote-skeleton" /> : watchedStocks.map((quote) => (
             <button className={`quote-option ${selected?.id === quote.id ? "is-active" : ""}`} onClick={() => setSelectedId(quote.id)} key={quote.id}>
               <span><strong>{quote.name}</strong><small>{quote.symbol} · {quote.market}</small></span>
               <b className={(quote.changePct ?? 0) >= 0 ? "positive" : "negative"}>
@@ -149,7 +190,16 @@ export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes
                     <span>{selected.market} · {selected.symbol}</span>
                     <h2>{selected.name}</h2>
                   </div>
-                  <small><i /> 行情快照 · {quoteTime}</small>
+                  <div className="quote-head-actions">
+                    <small><i /> 行情快照 · {quoteTime}</small>
+                    <button
+                      className={`watchlist-action ${isWatched ? "is-watched" : ""}`}
+                      disabled={isWatched}
+                      onClick={addSelectedToWatchlist}
+                    >
+                      {isWatched ? "✓ 已在关注" : "＋ 加入关注"}
+                    </button>
+                  </div>
                 </header>
 
                 <div className="quote-card-primary">

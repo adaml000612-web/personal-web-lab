@@ -847,6 +847,22 @@ h1 em {
 .quote-card-head h2 { margin: 5px 0 0; color: #173c31; font-size: 22px; letter-spacing: -.035em; }
 .quote-card-head > small { display: flex; align-items: center; gap: 7px; color: #71827c; font: var(--font-floor) var(--mono); }
 .quote-card-head > small i { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 5px rgba(21,169,124,.09); }
+.quote-head-actions { display: flex; align-items: center; gap: 12px; }
+.quote-head-actions > small { display: flex; align-items: center; gap: 7px; color: #71827c; font: var(--font-floor) var(--mono); }
+.quote-head-actions > small i { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 0 5px rgba(21,169,124,.09); }
+.watchlist-action {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid rgba(23,111,90,.25);
+  border-radius: 999px;
+  background: #176f5a;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.watchlist-action:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(23,111,90,.2); }
+.watchlist-action.is-watched { background: #edf7f3; color: #397164; cursor: default; }
 .quote-card-primary { margin-top: 22px; display: grid; grid-template-columns: minmax(0,1.25fr) minmax(180px,.75fr); align-items: end; gap: 34px; }
 .hero-change > span, .hero-price > span { display: block; color: #69758b; font: var(--font-floor) var(--mono); letter-spacing: .12em; }
 .hero-change p { margin: 5px 0 0; font: 840 clamp(42px, 4.5vw, 66px)/1 var(--mono); letter-spacing: -.075em; }
@@ -1068,6 +1084,7 @@ footer p { margin: 0; text-align: center; }
   .price-intro::after { font-size: 36vw; bottom: 0; }
   .stock-search input { width: 100px; }
   .stock-search button { min-width: 84px; }
+  .quote-head-actions { justify-content: space-between; flex-wrap: wrap; }
   .hero-quote { padding: 20px 18px 0; }
   .quote-card-head { align-items: flex-start; }
   .quote-card-head > small { margin-top: 2px; }
