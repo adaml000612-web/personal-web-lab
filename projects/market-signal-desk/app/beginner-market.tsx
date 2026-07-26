@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
 import type { KlinePeriod, KlinePoint } from "./kline";
 import { KlineChart } from "./kline-chart";
 import type { Quote } from "./market-config";
@@ -80,6 +80,13 @@ export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes
 
   const positive = (selected?.changePct ?? 0) >= 0;
   const prefix = selected ? currencySymbol[selected.currency] ?? "" : "";
+  const changeAmount = selected?.previous === null || !selected ? null : selected.value - selected.previous;
+  const dayRange = selected?.low !== null && selected?.high !== null && selected && selected.high > selected.low
+    ? Math.min(100, Math.max(0, ((selected.value - selected.low) / (selected.high - selected.low)) * 100))
+    : 50;
+  const quoteTime = selected
+    ? new Date(selected.updatedAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })
+    : "--:--";
 
   return (
     <section className="beginner-market" id="top">
@@ -117,27 +124,51 @@ export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes
           {selected ? (
             <>
               <article className="hero-quote">
-                <div><span>{selected.market}</span><small>{selected.symbol}</small></div>
-                <h2>{selected.name}</h2>
-                <div className="hero-change">
-                  <span>今日涨跌</span>
-                  <p className={positive ? "positive" : "negative"}>
-                    {positive ? "▲" : "▼"} {Math.abs(selected.changePct ?? 0).toFixed(2)}%
-                    <small>相比上一个交易日收盘价</small>
-                  </p>
+                <header className="quote-card-head">
+                  <div>
+                    <span>{selected.market} · {selected.symbol}</span>
+                    <h2>{selected.name}</h2>
+                  </div>
+                  <small><i /> 行情快照 · {quoteTime}</small>
+                </header>
+
+                <div className="quote-card-primary">
+                  <div className="hero-change">
+                    <span>今日涨跌</span>
+                    <p className={positive ? "positive" : "negative"}>
+                      {positive ? "▲" : "▼"} {Math.abs(selected.changePct ?? 0).toFixed(2)}%
+                    </p>
+                    <small>
+                      较昨收 {changeAmount === null ? "—" : `${changeAmount >= 0 ? "+" : "−"}${number(Math.abs(changeAmount), prefix)}`}
+                    </small>
+                  </div>
+                  <div className="hero-price">
+                    <span>现价</span>
+                    <strong>{number(selected.value, prefix)}</strong>
+                    <small>昨收 {number(selected.previous, prefix)}</small>
+                  </div>
                 </div>
-                <div className="hero-price"><span>现价</span><strong>{number(selected.value, prefix)}</strong></div>
+
+                <div className="day-range" style={{ "--range-position": `${dayRange}%` } as CSSProperties}>
+                  <div><span>当日位置</span><small>现价在今日高低区间的位置</small></div>
+                  <div className="range-track"><i /></div>
+                  <div className="range-values">
+                    <span>最低 <strong>{number(selected.low, prefix)}</strong></span>
+                    <span>最高 <strong>{number(selected.high, prefix)}</strong></span>
+                  </div>
+                </div>
+
+                <div className="quote-metrics">
+                  {[
+                    ["昨收", selected.previous],
+                    ["今开", selected.open],
+                    ["最高", selected.high],
+                    ["最低", selected.low],
+                  ].map(([label, value]) => (
+                    <div key={label as string}><span>{label}</span><strong>{number(value as number | null, prefix)}</strong></div>
+                  ))}
+                </div>
               </article>
-              <div className="quote-metrics">
-                {[
-                  ["昨收", selected.previous, "上一个交易日最后的价格"],
-                  ["今开", selected.open, "今天开盘时的第一笔参考价"],
-                  ["最高", selected.high, "今天到目前为止的最高价"],
-                  ["最低", selected.low, "今天到目前为止的最低价"],
-                ].map(([label, value, help]) => (
-                  <div key={label as string}><span>{label}</span><strong>{number(value as number | null, prefix)}</strong><small>{help}</small></div>
-                ))}
-              </div>
               <section className="kline-section">
                 <div className="kline-heading">
                   <div><strong>K 线与成交量</strong><small>红色收涨，绿色收跌；均线用于观察一段时间的平均价格。</small></div>
