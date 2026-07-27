@@ -55,6 +55,17 @@ test("rejects arbitrary model endpoints and oversized bodies", async () => {
   }), {}, { waitUntil() {}, passThroughOnException() {} });
   assert.equal(invalidModel.status, 400);
 
+  const mismatchedModel = await app.fetch(new Request("http://localhost/api/agent", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: "http://localhost" },
+    body: JSON.stringify({
+      message: "hi",
+      context,
+      model: { provider: "deepseek", model: "gpt-5-mini", apiKey: "x".repeat(30) },
+    }),
+  }), {}, { waitUntil() {}, passThroughOnException() {} });
+  assert.equal(mismatchedModel.status, 400);
+
   const oversized = await app.fetch(new Request("http://localhost/api/agent", {
     method: "POST",
     headers: { "Content-Type": "application/json", Origin: "http://localhost" },

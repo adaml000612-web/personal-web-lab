@@ -7,7 +7,10 @@ const MAX_BODY_BYTES = 48_000;
 const MAX_MESSAGE_LENGTH = 600;
 const MAX_RATE_KEYS = 1_000;
 const MODEL_TIMEOUT_MS = 14_000;
-const modelNamePattern = /^[a-zA-Z0-9._:-]{1,80}$/;
+const supportedModels = {
+  deepseek: new Set(["deepseek-v4-flash", "deepseek-v4-pro"]),
+  openai: new Set(["gpt-5.1", "gpt-5-mini", "gpt-5-nano"]),
+} as const;
 const requests = new Map<string, { count: number; resetAt: number }>();
 
 type ModelSelection =
@@ -118,7 +121,7 @@ function validModelSelection(value: unknown): value is ModelSelection {
   if (value.provider === "default") return true;
   return (value.provider === "deepseek" || value.provider === "openai")
     && typeof value.model === "string"
-    && modelNamePattern.test(value.model)
+    && supportedModels[value.provider].has(value.model)
     && typeof value.apiKey === "string"
     && value.apiKey.length >= 20
     && value.apiKey.length <= 256;
@@ -272,7 +275,7 @@ export async function POST(request: Request) {
           apiKey: selectedModel.provider === "openai" ? selectedModel.apiKey : process.env.OPENAI_API_KEY!,
           model: selectedModel.provider === "openai"
             ? selectedModel.model
-            : process.env.OPENAI_AGENT_MODEL || "gpt-5.6-luna",
+            : process.env.OPENAI_AGENT_MODEL || "gpt-5.1",
           history,
           prompt,
           clientKey,

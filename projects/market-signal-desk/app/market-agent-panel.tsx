@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { AgentContext, AgentSource } from "./market-agent";
 import type { Quote, Signal } from "./market-config";
-import { SESSION_API_KEY, type CustomModelProvider } from "./settings";
+import { sessionSecretStorageKey, type CustomModelProvider } from "./settings";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -82,7 +82,7 @@ export function MarketAgentPanel({
     setInput("");
     setLoading(true);
     const sessionApiKey = modelSettings.mode === "custom"
-      ? sessionStorage.getItem(SESSION_API_KEY)?.trim() ?? ""
+      ? sessionStorage.getItem(sessionSecretStorageKey(modelSettings.provider))?.trim() ?? ""
       : "";
     if (modelSettings.mode === "custom" && !sessionApiKey) {
       setMessages((current) => [...current, {
@@ -156,7 +156,7 @@ export function MarketAgentPanel({
 
           <div className="agent-context-strip">
             <span>已连接</span>
-            <strong>{modelSettings.mode === "custom" ? `自备 ${modelSettings.provider === "deepseek" ? "DeepSeek" : "OpenAI"}` : "网站默认模型"}</strong>
+            <strong>{modelSettings.mode === "custom" ? `自备 ${modelSettings.model}` : "网站默认模型"}</strong>
             <strong>{quotes.filter(({ type }) => type === "stock").length + customWatchlist.length} 只关注</strong>
             <strong>{signals.length} 条情报</strong>
             {activeSymbol && <strong>正在查看 {activeSymbol}</strong>}

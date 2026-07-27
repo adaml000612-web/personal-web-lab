@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  SESSION_API_KEY,
   colorPresets,
   defaultSettings,
-  isSafeModelName,
+  getModelDefinition,
+  modelCatalog,
+  sessionSecretStorageKey,
   type AppSettings,
-  type CustomModelProvider,
+  type CustomModelId,
   type MainModule,
 } from "./settings";
 
@@ -57,7 +58,6 @@ export function SettingsPanel({
   const [keyNotice, setKeyNotice] = useState("");
 
   useEffect(() => {
-    setHasSessionKey(Boolean(sessionStorage.getItem(SESSION_API_KEY)));
     panelRef.current?.focus();
     function closeOnEscape(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
@@ -65,6 +65,12 @@ export function SettingsPanel({
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [onClose]);
+
+  useEffect(() => {
+    setApiKey("");
+    setKeyNotice("");
+    setHasSessionKey(Boolean(sessionStorage.getItem(sessionSecretStorageKey(settings.customProvider))));
+  }, [settings.customProvider]);
 
   function patch(next: Partial<AppSettings>) {
     onChange({ ...settings, ...next });
@@ -89,11 +95,10 @@ export function SettingsPanel({
     patch({ mainModules: next });
   }
 
-  function changeProvider(provider: CustomModelProvider) {
-    patch({
-      customProvider: provider,
-      customModel: provider === "deepseek" ? "deepseek-v4-flash" : "gpt-5.6-luna",
-    });
+  function changeModel(model: CustomModelId) {
+    const definition = getModelDefinition(model);
+    if (!definition) return;
+    patch({ customProvider: definition.provider, customModel: definition.id });
   }
 
   function saveSessionKey() {
@@ -102,18 +107,20 @@ export function SettingsPanel({
       setKeyNotice("密钥长度不正确，请检查后再保存。");
       return;
     }
-    sessionStorage.setItem(SESSION_API_KEY, value);
+    sessionStorage.setItem(sessionSecretStorageKey(settings.customProvider), value);
     setApiKey("");
     setHasSessionKey(true);
-    setKeyNotice("密钥已保存到本次标签页会话。");
+    setKeyNotice(`${selectedModel.providerName} 密钥已保存到本次标签页会话。`);
   }
 
   function clearSessionKey() {
-    sessionStorage.removeItem(SESSION_API_KEY);
+    sessionStorage.removeItem(sessionSecretStorageKey(settings.customProvider));
     setApiKey("");
     setHasSessionKey(false);
-    setKeyNotice("本次会话密钥已清除。");
+    setKeyNotice(`${selectedModel.providerName} 密钥已从本次会话清除。`);
   }
+
+  const selectedModel = getModelDefinition(settings.customModel) ?? modelCatalog[0];
 
   return (
     <div className="settings-backdrop" role="presentation" onMouseDown={(event) => {
@@ -200,21 +207,48 @@ export function SettingsPanel({
             </div>
             {settings.modelMode === "custom" && (
               <div className="settings-custom-model">
-                <label><span>服务商</span><select value={settings.customProvider} onChange={(event) => changeProvider(event.target.value as CustomModelProvider)}>
-                  <option value="deepseek">DeepSeek 官方 API</option>
-                  <option value="openai">OpenAI 官方 API</option>
-                </select></label>
-                <label><span>模型名称</span><input value={settings.customModel} maxLength={80} onChange={(event) => {
-                  const value = event.target.value.trim();
-                  if (!value || isSafeModelName(value)) patch({ customModel: value });
-                }} placeholder={settings.customProvider === "deepseek" ? "deepseek-v4-flash" : "gpt-5.6-luna"} /></label>
-                <label><span>API Key</span><input type="password" value={apiKey} maxLength={256} autoComplete="off" spellCheck={false} onChange={(event) => setApiKey(event.target.value)} placeholder={hasSessionKey ? "本次会话已有密钥，输入可替换" : "仅保存到当前标签页会话"} /></label>
+                <div className="settings-model-step">
+                  <span>1</span>
+                  <div><strong>选择具体模型</strong><small>不同模型速度、能力和费用不同，费用由对应服务商收取。</small></div>
+                </div>
+                <div className="settings-model-catalog" role="radiogroup" aria-label="选择自备模型">
+                  {(["deepseek", "openai"] as const).map((provider) => (
+                    <div className="settings-provider-group" key={provider}>
+                      <header>
+                        <strong>{provider === "deepseek" ? "DeepSeek" : "OpenAI"}</strong>
+                        <small>官方 API</small>
+                      </header>
+                      <div>
+                        {modelCatalog.filter((model) => model.provider === provider).map((model) => (
+                          <button
+                            type="button"
+                            role="radio"
+                            aria-checked={settings.customModel === model.id}
+                            className={settings.customModel === model.id ? "is-active" : ""}
+                            key={model.id}
+                            onClick={() => changeModel(model.id)}
+                          >
+                            <span><strong>{model.name}</strong><b>{model.badge}</b></span>
+                            <small>{model.description}</small>
+                            <code>{model.id}</code>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="settings-model-step">
+                  <span>2</span>
+                  <div><strong>填写 {selectedModel.providerName} API Key</strong><small>你已选择 {selectedModel.name}，这里只接受对应服务商的密钥。</small></div>
+                  <a href={selectedModel.keyUrl} target="_blank" rel="noreferrer">获取 API Key ↗</a>
+                </div>
+                <label className="settings-api-key"><span>{selectedModel.providerName} API Key</span><input type="password" value={apiKey} maxLength={256} autoComplete="off" spellCheck={false} onChange={(event) => setApiKey(event.target.value)} placeholder={hasSessionKey ? `本次会话已有 ${selectedModel.providerName} 密钥，输入可替换` : `粘贴 ${selectedModel.providerName} API Key`} /></label>
                 <div className="settings-key-actions">
-                  <button type="button" onClick={saveSessionKey} disabled={!apiKey.trim()}>保存本次会话密钥</button>
-                  {hasSessionKey && <button type="button" onClick={clearSessionKey}>清除密钥</button>}
+                  <button type="button" onClick={saveSessionKey} disabled={!apiKey.trim()}>保存 {selectedModel.providerName} 密钥</button>
+                  {hasSessionKey && <button type="button" onClick={clearSessionKey}>清除 {selectedModel.providerName} 密钥</button>}
                 </div>
                 {keyNotice && <p className="settings-key-notice" aria-live="polite">{keyNotice}</p>}
-                <p className="settings-security-note"><strong>密钥不会写入长期设置或 GitHub。</strong>关闭这个浏览器标签页后自动失效，只会经本站服务器转发到你选择的官方接口。公共设备不要使用。</p>
+                <p className="settings-security-note"><strong>密钥不会写入长期设置或 GitHub。</strong>关闭这个浏览器标签页后自动失效，只会经本站服务器转发到 {selectedModel.providerName} 官方接口。切换模型时会自动使用该服务商对应的密钥，公共设备不要使用。</p>
               </div>
             )}
           </section>

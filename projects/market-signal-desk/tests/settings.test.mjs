@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   defaultSettings,
-  isSafeModelName,
+  isSupportedModel,
+  sessionSecretStorageKey,
   sanitizeSettings,
 } from "../app/settings.ts";
 
@@ -28,9 +29,16 @@ test("deduplicates and preserves the chosen module order", () => {
   assert.deepEqual(settings.mainModules, ["prices", "radar"]);
 });
 
-test("only accepts bounded model identifiers", () => {
-  assert.equal(isSafeModelName("deepseek-v4-flash"), true);
-  assert.equal(isSafeModelName("gpt-5.6-luna"), true);
-  assert.equal(isSafeModelName("https://internal.example/model"), false);
-  assert.equal(isSafeModelName("../secret"), false);
+test("only accepts catalog models for their matching provider", () => {
+  assert.equal(isSupportedModel("deepseek", "deepseek-v4-flash"), true);
+  assert.equal(isSupportedModel("openai", "gpt-5-mini"), true);
+  assert.equal(isSupportedModel("deepseek", "gpt-5-mini"), false);
+  assert.equal(isSupportedModel("openai", "https://internal.example/model"), false);
+  assert.notEqual(sessionSecretStorageKey("deepseek"), sessionSecretStorageKey("openai"));
+});
+
+test("repairs a provider and model mismatch", () => {
+  const settings = sanitizeSettings({ customProvider: "openai", customModel: "deepseek-v4-pro" });
+  assert.equal(settings.customProvider, "openai");
+  assert.equal(settings.customModel, "gpt-5.1");
 });

@@ -20,7 +20,7 @@ test("server-renders the market signal desk", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "今日重点", "全部信号", "公司级", "尚未阅读", "LIVE PULSE", "v2.8.0", "实时情报雷达", "每 5 圈自动刷新新闻", "问前哨"]) {
+  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "今日重点", "全部信号", "公司级", "尚未阅读", "LIVE PULSE", "v2.8.1", "实时情报雷达", "每 5 圈自动刷新新闻", "问前哨"]) {
     assert.match(html, new RegExp(content));
   }
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
@@ -78,14 +78,17 @@ test("keeps market coverage configurable and honest", async () => {
   assert.match(agentRoute, /OPENAI_API_KEY/);
   assert.match(agentRoute, /api\.deepseek\.com\/v1\/chat\/completions/);
   assert.match(agentRoute, /new TextEncoder\(\)\.encode\(rawBody\)/);
-  assert.match(agentRoute, /modelNamePattern/);
+  assert.match(agentRoute, /supportedModels/);
   assert.match(agentRoute, /Cache-Control": "no-store"/);
   assert.match(agentRoute, /buildFallbackAgentAnswer/);
-  assert.match(agentRoute, /gpt-5\.6-luna/);
-  assert.match(agentPanel, /SESSION_API_KEY/);
+  assert.match(agentRoute, /gpt-5\.1/);
+  assert.match(agentPanel, /sessionSecretStorageKey/);
   assert.match(settings, /fontSize:\s*14/);
   assert.match(settings, /mainModules:\s*\["radar", "prices"\]/);
   assert.match(settingsPanel, /把前哨调成你的样子/);
+  assert.match(settingsPanel, /选择具体模型/);
+  assert.match(settingsPanel, /填写.*API Key/);
+  assert.match(settingsPanel, /modelCatalog/);
   assert.match(settingsPanel, /关闭这个浏览器标签页后自动失效/);
   assert.doesNotMatch(settings, /apiKey/i);
   assert.doesNotMatch(agentRoute, /sk-[A-Za-z0-9]/);
