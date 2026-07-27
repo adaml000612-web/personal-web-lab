@@ -2,101 +2,192 @@ import { NextResponse } from "next/server";
 import {
   nasdaqSources,
   secCompanies,
-  topicRules,
-  watchedAliases,
   watchlist,
   type RawSignal,
 } from "../../market-config";
+import {
+  decodeFeedText,
+  keepRecentSignals,
+  parseNewsFeed,
+  safeNewsUrl,
+  type FeedFallback,
+  type FeedMeta,
+} from "../../news-collector";
 import { rankSignals } from "../../ranking";
 
-const SOURCE_TIMEOUT_MS = 3000;
+const SOURCE_TIMEOUT_MS = 5500;
+const OPTIONAL_SOURCE_TIMEOUT_MS = 2500;
+const NEWS_CACHE_MS = 180_000;
+const MAX_RESPONSE_BYTES = 2_000_000;
+
+type NewsPayload = {
+  signals: ReturnType<typeof rankSignals>;
+  fetchedAt: string;
+  status: {
+    workingSources: number;
+    totalSources: number;
+    recent24h: number;
+    coverage: Record<"p1" | "p2" | "p3" | "p4", number>;
+    failedSources: string[];
+  };
+};
+
+let cachedNews: { expiresAt: number; payload: NewsPayload } | null = null;
 
 export const dynamic = "force-dynamic";
 
-function safeUrl(value: string) {
-  try {
-    const url = new URL(value);
-    return ["http:", "https:"].includes(url.protocol) ? url.toString() : "";
-  } catch {
-    return "";
-  }
-}
-
-function decodeEntities(value: string) {
-  return value
-    .replaceAll("<![CDATA[", "")
-    .replaceAll("]]>", "")
-    .replaceAll("&amp;", "&")
-    .replaceAll("&quot;", '"')
-    .replaceAll("&#39;", "'")
-    .replaceAll("&lt;", "<")
-    .replaceAll("&gt;", ">")
-    .replace(/<[^>]+>/g, "")
-    .trim();
-}
-
-function parseRss(xml: string, meta: Omit<RawSignal, "id" | "title" | "url" | "publishedAt">) {
-  return [...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)].slice(0, 8).flatMap((match, index) => {
-    const item = match[1];
-    const title = decodeEntities(item.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "");
-    const url = safeUrl(decodeEntities(item.match(/<link>([\s\S]*?)<\/link>/i)?.[1] ?? ""));
-    const published = decodeEntities(item.match(/<pubDate>([\s\S]*?)<\/pubDate>/i)?.[1] ?? "");
-    if (!title || !url) return [];
-    const parsedDate = new Date(published);
-    return [{
-      id: `${meta.source}-${meta.actor}-${index}-${url}`,
-      title,
-      url,
-      publishedAt: Number.isNaN(parsedDate.getTime()) ? new Date().toISOString() : parsedDate.toISOString(),
-      ...meta,
-    }];
+async function fetchFeed(url: string, meta: FeedMeta, days = 7) {
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/rss+xml, application/xml, text/xml, application/atom+xml",
+      "User-Agent": "Mozilla/5.0 MarketSignalDesk/2.0",
+    },
+    cache: "no-store",
+    signal: AbortSignal.timeout(meta.timeoutMs ?? SOURCE_TIMEOUT_MS),
   });
-}
-
-function classifyWatchedHeadline(title: string) {
-  const lower = title.toLowerCase();
-  const direct = watchedAliases.find(({ values }) => values.some((value) => lower.includes(value)));
-  if (direct) return { actor: direct.actor, targets: [direct.id], priority: 1 as const, reason: "直接提及你的关注标的" };
-  const topic = topicRules.find(({ pattern }) => pattern.test(title));
-  if (topic) return { actor: "产业链", targets: [...topic.targets], priority: 2 as const, reason: "同板块或产业链信号" };
-  if (/(nasdaq|s&p 500|stock market|index|wall street)/i.test(title)) {
-    return { actor: "指数", targets: watchlist.map(({ id }) => id), priority: 3 as const, reason: "关注标的所属指数信号" };
-  }
-  return null;
+  if (!response.ok) throw new Error(`feed ${response.status}`);
+  const declaredSize = Number(response.headers.get("content-length") ?? 0);
+  if (declaredSize > MAX_RESPONSE_BYTES) throw new Error("feed too large");
+  const xml = await response.text();
+  if (new TextEncoder().encode(xml).length > MAX_RESPONSE_BYTES) throw new Error("feed too large");
+  return keepRecentSignals(parseNewsFeed(xml, meta), days);
 }
 
 async function fetchNasdaq(source: (typeof nasdaqSources)[number]): Promise<RawSignal[]> {
   const { symbol } = source;
   const isPeer = "aliases" in source;
-  const response = await fetch(`https://www.nasdaq.com/feed/rssoutbound?symbol=${symbol}`, {
-    headers: { "User-Agent": "Mozilla/5.0 MarketSignalDesk/1.0" },
-    cache: "no-store",
-    signal: AbortSignal.timeout(SOURCE_TIMEOUT_MS),
-  });
-  if (!response.ok) throw new Error(`nasdaq ${response.status}`);
-  const signals = parseRss(await response.text(), {
+  const watched = watchlist.find((item) => item.symbol === symbol);
+  const fallback: FeedFallback | undefined = isPeer
+    ? {
+        priority: 4,
+        reason: "海外同类公司与映射市场",
+        actor: source.actor,
+        targets: [...source.targets],
+      }
+    : watched
+      ? {
+          priority: 1,
+          reason: "关注公司相关新闻",
+          actor: watched.name,
+          targets: [watched.id],
+        }
+      : undefined;
+  return fetchFeed(`https://www.nasdaq.com/feed/rssoutbound?symbol=${encodeURIComponent(symbol)}`, {
     source: "Nasdaq RSS",
-    priority: isPeer ? 4 : 1,
-    reason: isPeer ? "海外同类公司与映射市场" : "候选信号",
-    actor: isPeer ? source.actor : symbol,
     official: false,
-    targets: isPeer ? [...source.targets] : [],
-  });
-  if (isPeer) {
-    return signals.filter(({ title }) =>
-      source.aliases.some((alias) => title.toLowerCase().includes(alias)));
+    fallback,
+    maxItems: 16,
+  }, 10);
+}
+
+const allTargets = watchlist.map(({ id }) => id);
+const nasdaqCoverageFeeds: Array<{ symbol: string; fallback: FeedFallback }> = [
+  {
+    symbol: "QQQ",
+    fallback: { priority: 3, reason: "纳斯达克市场与指数信号", actor: "纳斯达克", targets: allTargets },
+  },
+  {
+    symbol: "SPY",
+    fallback: { priority: 3, reason: "标普 500 市场与指数信号", actor: "标普500", targets: allTargets },
+  },
+  {
+    symbol: "FXI",
+    fallback: { priority: 3, reason: "中国与港股市场指数信号", actor: "中概与港股指数", targets: allTargets },
+  },
+  {
+    symbol: "SMH",
+    fallback: {
+      priority: 2,
+      reason: "半导体产业链与板块信号",
+      actor: "半导体产业链",
+      targets: ["nvda", "googl", "innolight"],
+    },
+  },
+  {
+    symbol: "SOXX",
+    fallback: {
+      priority: 2,
+      reason: "芯片产业链与板块信号",
+      actor: "芯片产业链",
+      targets: ["nvda", "googl", "innolight"],
+    },
+  },
+];
+
+function fetchNasdaqCoverage({ symbol, fallback }: (typeof nasdaqCoverageFeeds)[number]) {
+  return fetchFeed(`https://www.nasdaq.com/feed/rssoutbound?symbol=${symbol}`, {
+    source: "Nasdaq 主题 RSS",
+    fallback,
+    preferFallback: true,
+    maxItems: 14,
+  }, 7);
+}
+
+const publicQueries: Array<{
+  provider: "Google News" | "Bing News";
+  query: string;
+  locale?: "zh";
+  fallback?: FeedFallback;
+}> = [
+  { provider: "Google News", query: '"NVIDIA" OR "Tesla" OR "Alphabet" OR "Google" OR "SpaceX" when:3d' },
+  { provider: "Google News", query: '"腾讯" OR "中际旭创" OR "Tencent" OR "Innolight" when:5d', locale: "zh" },
+  {
+    provider: "Google News",
+    query: '"AI chips" OR semiconductor OR datacenter OR "electric vehicle" OR rocket OR satellite when:3d',
+    fallback: { priority: 2, reason: "同板块或产业链信号", actor: "产业链", targets: allTargets },
+  },
+  {
+    provider: "Google News",
+    query: 'Nasdaq OR "S&P 500" OR "Shanghai Composite" OR "Hang Seng" when:3d',
+    fallback: { priority: 3, reason: "关注标的所属市场指数信号", actor: "指数", targets: allTargets },
+  },
+  {
+    provider: "Google News",
+    query: 'AMD OR Broadcom OR TSMC OR "Rocket Lab" OR Meta OR Alibaba OR "SK hynix" OR Samsung when:3d',
+    fallback: { priority: 4, reason: "海外同类公司与映射市场", actor: "海外市场", targets: allTargets },
+  },
+  {
+    provider: "Bing News",
+    query: "Nasdaq S&P 500 stock market",
+    fallback: { priority: 3, reason: "关注标的所属市场指数信号", actor: "指数", targets: allTargets },
+  },
+  {
+    provider: "Bing News",
+    query: "AI semiconductor data center electric vehicle market",
+    fallback: { priority: 2, reason: "同板块或产业链信号", actor: "产业链", targets: allTargets },
+  },
+];
+
+function publicFeedUrl({ provider, query, locale }: (typeof publicQueries)[number]) {
+  if (provider === "Bing News") {
+    const url = new URL("https://www.bing.com/news/search");
+    url.searchParams.set("q", query);
+    url.searchParams.set("format", "rss");
+    return url.toString();
   }
-  return signals.flatMap((signal) => {
-    const classification = classifyWatchedHeadline(signal.title);
-    return classification ? [{ ...signal, ...classification }] : [];
-  });
+  const url = new URL("https://news.google.com/rss/search");
+  url.searchParams.set("q", query);
+  url.searchParams.set("hl", locale === "zh" ? "zh-CN" : "en-US");
+  url.searchParams.set("gl", locale === "zh" ? "CN" : "US");
+  url.searchParams.set("ceid", locale === "zh" ? "CN:zh-Hans" : "US:en");
+  return url.toString();
+}
+
+function fetchPublicNews(query: (typeof publicQueries)[number]) {
+  return fetchFeed(publicFeedUrl(query), {
+    source: query.provider,
+    fallback: query.fallback,
+    preferFallback: Boolean(query.fallback),
+    maxItems: query.provider === "Google News" ? 36 : 20,
+    timeoutMs: OPTIONAL_SOURCE_TIMEOUT_MS,
+  }, query.locale === "zh" ? 5 : 3);
 }
 
 async function fetchTencentAnnouncements(): Promise<RawSignal[]> {
   const response = await fetch("https://www.tencent.com.cn/zh-cn/investors/announcements.html", {
     headers: { "User-Agent": "Mozilla/5.0 MarketSignalDesk/1.0" },
     cache: "no-store",
-    signal: AbortSignal.timeout(SOURCE_TIMEOUT_MS),
+    signal: AbortSignal.timeout(OPTIONAL_SOURCE_TIMEOUT_MS),
   });
   if (!response.ok) throw new Error(`tencent ${response.status}`);
   const html = await response.text();
@@ -104,7 +195,7 @@ async function fetchTencentAnnouncements(): Promise<RawSignal[]> {
     .slice(0, 10)
     .map((match, index) => ({
       id: `tencent-official-${index}-${match[1]}`,
-      title: `腾讯：${decodeEntities(match[3])}`,
+      title: `腾讯：${decodeFeedText(match[3])}`,
       url: match[1],
       source: "腾讯投资者关系",
       publishedAt: new Date(`${match[2].replaceAll(".", "-")}T12:00:00+08:00`).toISOString(),
@@ -136,7 +227,7 @@ async function fetchInnolightAnnouncements(): Promise<RawSignal[]> {
     const title = typeof item.title === "string" ? item.title : "";
     const code = typeof item.art_code === "string" ? item.art_code : "";
     const dateValue = typeof item.notice_date === "string" ? item.notice_date : "";
-    const url = safeUrl(`https://data.eastmoney.com/notices/detail/300308/${code}.html`);
+    const url = safeNewsUrl(`https://data.eastmoney.com/notices/detail/300308/${code}.html`);
     if (!title || !code || !url) return [];
     return [{
       id: `innolight-${code}`,
@@ -164,7 +255,7 @@ async function fetchSecFilings(): Promise<RawSignal[]> {
     const payload = await response.json();
     const recent = payload?.filings?.recent;
     if (!recent?.accessionNumber) return [];
-    const cutoff = Date.now() - 120 * 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - 45 * 24 * 60 * 60 * 1000;
     return recent.accessionNumber.flatMap((accession: string, index: number) => {
       const filingDate = recent.filingDate?.[index];
       const form = recent.form?.[index];
@@ -190,26 +281,68 @@ async function fetchSecFilings(): Promise<RawSignal[]> {
 }
 
 export async function GET() {
-  const sources = await Promise.allSettled([
-    ...nasdaqSources.map(fetchNasdaq),
-    fetchTencentAnnouncements(),
-    fetchInnolightAnnouncements(),
-    fetchSecFilings(),
-  ]);
+  const now = Date.now();
+  if (cachedNews && cachedNews.expiresAt > now) {
+    return NextResponse.json(cachedNews.payload, {
+      headers: {
+        "Cache-Control": "public, max-age=180, stale-while-revalidate=900",
+        "X-News-Cache": "HIT",
+      },
+    });
+  }
+
+  const sourceTasks = [
+    ...nasdaqSources.map((source) => ({
+      label: `Nasdaq:${source.symbol}`,
+      task: fetchNasdaq(source),
+    })),
+    ...nasdaqCoverageFeeds.map((source) => ({
+      label: `Nasdaq主题:${source.symbol}`,
+      task: fetchNasdaqCoverage(source),
+    })),
+    ...publicQueries.map((query, index) => ({
+      label: `${query.provider}:${index + 1}`,
+      task: fetchPublicNews(query),
+    })),
+    { label: "腾讯投资者关系", task: fetchTencentAnnouncements() },
+    { label: "东方财富公告索引", task: fetchInnolightAnnouncements() },
+    { label: "SEC EDGAR", task: fetchSecFilings() },
+  ];
+  const sources = await Promise.allSettled(sourceTasks.map(({ task }) => task));
 
   const signals = rankSignals(
-    sources.flatMap((result) => result.status === "fulfilled" ? result.value : []),
-  ).slice(0, 80);
+    keepRecentSignals(
+      sources.flatMap((result) => result.status === "fulfilled" ? result.value : []),
+      45,
+      now,
+    ),
+    now,
+  ).slice(0, 120);
 
-  return NextResponse.json(
-    {
-      signals,
-      fetchedAt: new Date().toISOString(),
-      status: {
-        workingSources: sources.filter((result) => result.status === "fulfilled").length,
-        totalSources: sources.length,
+  const payload: NewsPayload = {
+    signals,
+    fetchedAt: new Date(now).toISOString(),
+    status: {
+      workingSources: sources.filter((result) => result.status === "fulfilled").length,
+      totalSources: sources.length,
+      recent24h: signals.filter(({ publishedAt }) => now - new Date(publishedAt).getTime() <= 86_400_000).length,
+      coverage: {
+        p1: signals.filter(({ priority }) => priority === 1).length,
+        p2: signals.filter(({ priority }) => priority === 2).length,
+        p3: signals.filter(({ priority }) => priority === 3).length,
+        p4: signals.filter(({ priority }) => priority === 4).length,
       },
+      failedSources: sourceTasks
+        .filter((_, index) => sources[index].status === "rejected")
+        .map(({ label }) => label),
     },
-    { headers: { "Cache-Control": "public, max-age=300, stale-while-revalidate=900" } },
-  );
+  };
+  cachedNews = { expiresAt: now + NEWS_CACHE_MS, payload };
+
+  return NextResponse.json(payload, {
+    headers: {
+      "Cache-Control": "public, max-age=180, stale-while-revalidate=900",
+      "X-News-Cache": "MISS",
+    },
+  });
 }

@@ -6,7 +6,14 @@ const sourceTrust: Record<string, number> = {
   "腾讯投资者关系": 14,
   "东方财富公告索引": 9,
   "Nasdaq RSS": 8,
+  "Google News": 7,
+  "Bing News": 6,
 };
+
+function trustScore(source: string) {
+  const matched = Object.entries(sourceTrust).find(([name]) => source.startsWith(name));
+  return matched?.[1] ?? 5;
+}
 
 function freshnessScore(publishedAt: string, now: number) {
   const ageHours = Math.max(0, (now - new Date(publishedAt).getTime()) / 3_600_000);
@@ -19,7 +26,7 @@ function freshnessScore(publishedAt: string, now: number) {
 
 function rankSignal(signal: RawSignal, now: number): Signal {
   const freshness = freshnessScore(signal.publishedAt, now);
-  const trust = sourceTrust[signal.source] ?? 5;
+  const trust = trustScore(signal.source);
   const official = signal.official ? 10 : 0;
   const focus = Math.max(2, 8 - (signal.targets.length - 1) * 2);
   const score = Math.min(99, priorityBase[signal.priority] + freshness + trust + official + focus);

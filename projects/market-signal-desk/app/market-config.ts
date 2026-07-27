@@ -65,18 +65,18 @@ export const sourceLinks = [
 ] as const;
 
 export const watchedAliases = [
-  { id: "nvda", actor: "英伟达", values: ["nvidia", "nvda"] },
+  { id: "nvda", actor: "英伟达", values: ["nvidia", "nvda", "英伟达"] },
   { id: "spacex", actor: "SpaceX", values: ["spacex"] },
-  { id: "tsla", actor: "特斯拉", values: ["tesla", "tsla"] },
-  { id: "googl", actor: "谷歌", values: ["alphabet", "google", "googl"] },
-  { id: "tencent", actor: "腾讯", values: ["tencent"] },
-  { id: "innolight", actor: "中际旭创", values: ["innolight", "中际旭创"] },
+  { id: "tsla", actor: "特斯拉", values: ["tesla", "tsla", "特斯拉"] },
+  { id: "googl", actor: "谷歌", values: ["alphabet", "google", "googl", "谷歌"] },
+  { id: "tencent", actor: "腾讯", values: ["tencent", "腾讯", "0700.hk", "00700"] },
+  { id: "innolight", actor: "中际旭创", values: ["innolight", "中际旭创", "300308"] },
 ];
 
 export const topicRules = [
-  { pattern: /(ai|artificial intelligence|chip|semiconductor|gpu|光模块|算力)/i, targets: ["nvda", "googl", "tencent", "innolight"] },
-  { pattern: /(autonomous|electric vehicle|ev\b|robotaxi|自动驾驶|电动车)/i, targets: ["tsla", "googl", "nvda"] },
-  { pattern: /(cloud|data center|datacenter|云计算|数据中心)/i, targets: ["googl", "tencent", "nvda", "innolight"] },
+  { pattern: /(\bai\b|artificial intelligence|chip|semiconductor|gpu|memory chip|optical module|光模块|算力|芯片|半导体)/i, targets: ["nvda", "googl", "tencent", "innolight"] },
+  { pattern: /(autonomous|electric vehicle|\bev\b|robotaxi|自动驾驶|电动车|新能源汽车)/i, targets: ["tsla", "googl", "nvda"] },
+  { pattern: /(cloud|data center|datacenter|hyperscale|云计算|数据中心)/i, targets: ["googl", "tencent", "nvda", "innolight"] },
   { pattern: /(spaceflight|rocket|launch|satellite|航天|火箭|卫星)/i, targets: ["spacex"] },
 ] as const;
 
