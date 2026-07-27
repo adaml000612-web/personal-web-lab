@@ -20,7 +20,7 @@ test("server-renders the market signal desk", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "今日重点", "全部信号", "公司级", "尚未阅读", "LIVE PULSE", "v2.9.1", "实时情报雷达", "每 5 圈自动刷新新闻", "问前哨"]) {
+  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "今日重点", "全部信号", "公司级", "尚未阅读", "LIVE PULSE", "v2.9.2", "实时情报雷达", "每 5 圈自动刷新新闻", "问前哨"]) {
     assert.match(html, new RegExp(content));
   }
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
@@ -83,6 +83,7 @@ test("keeps market coverage configurable and honest", async () => {
   assert.match(agentRoute, /api\.x\.ai\/v1\/chat\/completions/);
   assert.match(agentRoute, /dashscope\.aliyuncs\.com\/compatible-mode\/v1\/chat\/completions/);
   assert.match(agentRoute, /api\.minimaxi\.com\/v1\/chat\/completions/);
+  assert.match(agentRoute, /api\.moonshot\.cn\/v1\/chat\/completions/);
   assert.match(agentRoute, /new TextEncoder\(\)\.encode\(rawBody\)/);
   assert.match(agentRoute, /supportedModels/);
   assert.match(agentRoute, /Cache-Control": "no-store"/);
@@ -103,6 +104,9 @@ test("keeps market coverage configurable and honest", async () => {
   assert.match(settings, /claude-opus-4-8/);
   assert.match(settings, /gemini-3\.6-flash/);
   assert.match(settings, /glm-5\.2/);
+  assert.match(settings, /kimi-k3/);
+  assert.match(settings, /kimi-k2\.7-code-highspeed/);
+  assert.doesNotMatch(settingsPanel, /收录依据/);
   assert.match(settingsPanel, /关闭这个浏览器标签页后自动失效/);
   assert.doesNotMatch(settings, /\bapiKey\s*:/);
   assert.doesNotMatch(agentRoute, /sk-[A-Za-z0-9]/);

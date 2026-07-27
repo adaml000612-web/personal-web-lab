@@ -35,9 +35,12 @@ test("only accepts catalog models for their matching provider", () => {
   assert.equal(isSupportedModel("anthropic", "claude-fable-5"), true);
   assert.equal(isSupportedModel("google", "gemini-3.6-flash"), true);
   assert.equal(isSupportedModel("zai", "glm-5.2"), true);
+  assert.equal(isSupportedModel("kimi", "kimi-k3"), true);
+  assert.equal(isSupportedModel("kimi", "kimi-k2.7-code-highspeed"), true);
   assert.equal(isSupportedModel("deepseek", "gpt-5.6-terra"), false);
   assert.equal(isSupportedModel("openai", "https://internal.example/model"), false);
   assert.notEqual(sessionSecretStorageKey("deepseek"), sessionSecretStorageKey("openai"));
+  assert.notEqual(sessionSecretStorageKey("kimi"), sessionSecretStorageKey("openai"));
 });
 
 test("repairs a provider and model mismatch", () => {

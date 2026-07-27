@@ -5,7 +5,6 @@ import {
   colorPresets,
   defaultSettings,
   getModelDefinition,
-  modelRecencyLabel,
   modelCatalog,
   providerOrder,
   sessionSecretStorageKey,
@@ -238,7 +237,6 @@ export function SettingsPanel({
                     <span>模型</span>
                     <span>公司</span>
                     <span>擅长方向</span>
-                    <span>收录依据</span>
                   </div>
                   <div className="settings-model-catalog" role="radiogroup" aria-label="选择自备模型">
                     {visibleModels.map((model) => (
@@ -254,7 +252,6 @@ export function SettingsPanel({
                         <strong>{model.name}</strong>
                         <span>{model.providerName}</span>
                         <span>{model.strength}</span>
-                        <b>{modelRecencyLabel(model)}</b>
                       </button>
                     ))}
                   </div>

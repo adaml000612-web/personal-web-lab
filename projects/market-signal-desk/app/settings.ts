@@ -7,7 +7,8 @@ export type CustomModelProvider =
   | "zai"
   | "xai"
   | "qwen"
-  | "minimax";
+  | "minimax"
+  | "kimi";
 export type CustomModelId =
   | "deepseek-v4-flash"
   | "deepseek-v4-pro"
@@ -27,7 +28,11 @@ export type CustomModelId =
   | "qwen3.7-max"
   | "qwen3.7-plus"
   | "MiniMax-M2.7"
-  | "MiniMax-M2.5";
+  | "MiniMax-M2.5"
+  | "kimi-k3"
+  | "kimi-k2.7-code"
+  | "kimi-k2.7-code-highspeed"
+  | "kimi-k2.6";
 
 export type CustomModelDefinition = {
   id: CustomModelId;
@@ -57,7 +62,7 @@ export const SETTINGS_STORAGE_KEY = "msd-settings-v1";
 export const SESSION_MODEL_KEY_PREFIX = "msd-model-api-key";
 
 export const providerOrder: readonly CustomModelProvider[] = [
-  "openai", "anthropic", "google", "deepseek", "zai", "xai", "qwen", "minimax",
+  "openai", "anthropic", "google", "deepseek", "kimi", "zai", "xai", "qwen", "minimax",
 ];
 
 export const modelCatalog: readonly CustomModelDefinition[] = [
@@ -180,6 +185,26 @@ export const modelCatalog: readonly CustomModelDefinition[] = [
     id: "MiniMax-M2.5", provider: "minimax", providerName: "MiniMax", name: "MiniMax M2.5",
     strength: "复杂任务、生产力", releasedAt: "2026-02-12", generationAge: 1,
     keyUrl: "https://platform.minimaxi.com/user-center/basic-information/interface-key",
+  },
+  {
+    id: "kimi-k3", provider: "kimi", providerName: "Kimi", name: "Kimi K3",
+    strength: "深度推理、知识工作", releasedAt: "2026-07-16", generationAge: 0,
+    keyUrl: "https://platform.kimi.com/console/api-keys",
+  },
+  {
+    id: "kimi-k2.7-code", provider: "kimi", providerName: "Kimi", name: "Kimi K2.7 Code",
+    strength: "长程编程、代码智能体", releasedAt: "2026-06-12", generationAge: 1,
+    keyUrl: "https://platform.kimi.com/console/api-keys",
+  },
+  {
+    id: "kimi-k2.7-code-highspeed", provider: "kimi", providerName: "Kimi", name: "Kimi K2.7 Code Highspeed",
+    strength: "高速编程、代码智能体", releasedAt: "2026-06-12", generationAge: 1,
+    keyUrl: "https://platform.kimi.com/console/api-keys",
+  },
+  {
+    id: "kimi-k2.6", provider: "kimi", providerName: "Kimi", name: "Kimi K2.6",
+    strength: "通用智能体、多模态", releasedAt: "2026-04-20", generationAge: 1,
+    keyUrl: "https://platform.kimi.com/console/api-keys",
   },
 ] as const;
 

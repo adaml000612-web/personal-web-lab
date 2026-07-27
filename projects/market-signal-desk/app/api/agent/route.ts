@@ -16,6 +16,7 @@ const supportedModels = {
   xai: new Set(["grok-4.5"]),
   qwen: new Set(["qwen3.7-max", "qwen3.7-plus"]),
   minimax: new Set(["MiniMax-M2.7", "MiniMax-M2.5"]),
+  kimi: new Set(["kimi-k3", "kimi-k2.7-code", "kimi-k2.7-code-highspeed", "kimi-k2.6"]),
 } as const;
 type CustomProvider = keyof typeof supportedModels;
 const requests = new Map<string, { count: number; resetAt: number }>();
@@ -364,6 +365,7 @@ export async function POST(request: Request) {
         xai: "https://api.x.ai/v1/chat/completions",
         qwen: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
         minimax: "https://api.minimaxi.com/v1/chat/completions",
+        kimi: "https://api.moonshot.cn/v1/chat/completions",
       };
       answer = await callChatCompatible({
         endpoint: endpoints[selectedModel.provider],
