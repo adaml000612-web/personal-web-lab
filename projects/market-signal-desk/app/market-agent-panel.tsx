@@ -115,15 +115,19 @@ export function MarketAgentPanel({
   return (
     <>
       <button className={`agent-launcher ${open ? "is-open" : ""}`} onClick={() => setOpen((current) => !current)} aria-expanded={open} aria-controls="market-agent-panel">
-        <span className="agent-launcher-mark"><i /></span>
-        <span><strong>问前哨</strong><small>投资新手陪练</small></span>
+        <span className="agent-launcher-mark" aria-hidden="true"><i /><b /></span>
+        <span><strong>问前哨</strong><small>看懂今天的市场</small></span>
       </button>
 
       {open && (
         <aside className="agent-panel" id="market-agent-panel" role="dialog" aria-modal="false" aria-label="问前哨智能体">
           <header className="agent-header">
-            <div className="agent-avatar"><i /><span>AI</span></div>
-            <div><strong>问前哨</strong><small><i /> 正在读取当前行情</small></div>
+            <div className="agent-avatar" aria-hidden="true"><i /><span /></div>
+            <div className="agent-header-copy">
+              <small>MARKET COPILOT</small>
+              <strong>问前哨</strong>
+              <em><i />行情与情报已连接</em>
+            </div>
             <button onClick={() => setOpen(false)} aria-label="关闭问前哨">×</button>
           </header>
 
