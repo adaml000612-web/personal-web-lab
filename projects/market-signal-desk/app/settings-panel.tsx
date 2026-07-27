@@ -11,6 +11,7 @@ import {
   sessionSecretStorageKey,
   type AppSettings,
   type CustomModelId,
+  type CustomModelProvider,
   type MainModule,
 } from "./settings";
 
@@ -58,6 +59,7 @@ export function SettingsPanel({
   const [apiKey, setApiKey] = useState("");
   const [hasSessionKey, setHasSessionKey] = useState(false);
   const [keyNotice, setKeyNotice] = useState("");
+  const [modelProviderFilter, setModelProviderFilter] = useState<CustomModelProvider | "all">("all");
 
   useEffect(() => {
     panelRef.current?.focus();
@@ -123,6 +125,9 @@ export function SettingsPanel({
   }
 
   const selectedModel = getModelDefinition(settings.customModel) ?? modelCatalog[0];
+  const visibleModels = modelProviderFilter === "all"
+    ? modelCatalog
+    : modelCatalog.filter(({ provider }) => provider === modelProviderFilter);
 
   return (
     <div className="settings-backdrop" role="presentation" onMouseDown={(event) => {
@@ -214,31 +219,45 @@ export function SettingsPanel({
                   <div><strong>选择具体模型</strong><small>不同模型速度、能力和费用不同，费用由对应服务商收取。</small></div>
                 </div>
                 <p className="settings-catalog-policy">收录规则：最近三个月发布或更新，或仍在使用的最近两代；仅保留已开放官方 API 的文本模型。</p>
-                <div className="settings-model-catalog" role="radiogroup" aria-label="选择自备模型">
-                  {providerOrder.map((provider) => (
-                    <div className="settings-provider-group" key={provider}>
-                      <header>
-                        <strong>{modelCatalog.find((model) => model.provider === provider)?.providerName}</strong>
-                        <small>{modelCatalog.filter((model) => model.provider === provider).length} 个</small>
-                      </header>
-                      <div>
-                        {modelCatalog.filter((model) => model.provider === provider).map((model) => (
-                          <button
-                            type="button"
-                            role="radio"
-                            aria-checked={settings.customModel === model.id}
-                            className={settings.customModel === model.id ? "is-active" : ""}
-                            key={model.id}
-                            onClick={() => changeModel(model.id)}
-                          >
-                            <i aria-hidden="true" />
-                            <span><strong>{model.name}</strong><small>擅长：{model.strength}</small></span>
-                            <b>{modelRecencyLabel(model)}</b>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                <div className="settings-provider-filters" aria-label="按模型公司筛选">
+                  <button type="button" className={modelProviderFilter === "all" ? "is-active" : ""} onClick={() => setModelProviderFilter("all")}>
+                    全部 <small>{modelCatalog.length}</small>
+                  </button>
+                  {providerOrder.map((provider) => {
+                    const providerModels = modelCatalog.filter((model) => model.provider === provider);
+                    return (
+                      <button type="button" className={modelProviderFilter === provider ? "is-active" : ""} key={provider} onClick={() => setModelProviderFilter(provider)}>
+                        {providerModels[0]?.providerName} <small>{providerModels.length}</small>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="settings-model-table">
+                  <div className="settings-model-table-head" aria-hidden="true">
+                    <span />
+                    <span>模型</span>
+                    <span>公司</span>
+                    <span>擅长方向</span>
+                    <span>收录依据</span>
+                  </div>
+                  <div className="settings-model-catalog" role="radiogroup" aria-label="选择自备模型">
+                    {visibleModels.map((model) => (
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={settings.customModel === model.id}
+                        className={settings.customModel === model.id ? "is-active" : ""}
+                        key={model.id}
+                        onClick={() => changeModel(model.id)}
+                      >
+                        <i aria-hidden="true" />
+                        <strong>{model.name}</strong>
+                        <span>{model.providerName}</span>
+                        <span>{model.strength}</span>
+                        <b>{modelRecencyLabel(model)}</b>
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="settings-model-step">
                   <span>2</span>

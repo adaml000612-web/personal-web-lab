@@ -20,7 +20,7 @@ test("server-renders the market signal desk", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "今日重点", "全部信号", "公司级", "尚未阅读", "LIVE PULSE", "v2.9.0", "实时情报雷达", "每 5 圈自动刷新新闻", "问前哨"]) {
+  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "今日重点", "全部信号", "公司级", "尚未阅读", "LIVE PULSE", "v2.9.1", "实时情报雷达", "每 5 圈自动刷新新闻", "问前哨"]) {
     assert.match(html, new RegExp(content));
   }
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
@@ -96,6 +96,9 @@ test("keeps market coverage configurable and honest", async () => {
   assert.match(settingsPanel, /填写.*API Key/);
   assert.match(settingsPanel, /modelCatalog/);
   assert.match(settingsPanel, /最近三个月发布或更新/);
+  assert.match(settingsPanel, /settings-provider-filters/);
+  assert.match(settingsPanel, /settings-model-table-head/);
+  assert.doesNotMatch(settingsPanel, /settings-provider-group/);
   assert.match(settings, /claude-fable-5/);
   assert.match(settings, /claude-opus-4-8/);
   assert.match(settings, /gemini-3\.6-flash/);
