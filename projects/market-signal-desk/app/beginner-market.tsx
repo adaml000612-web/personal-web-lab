@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import type { KlinePeriod, KlinePoint } from "./kline";
 import { KlineChart } from "./kline-chart";
 import { buildMarketAnalysis } from "./market-analysis";
@@ -8,6 +8,17 @@ import type { Quote } from "./market-config";
 
 const currencySymbol: Record<string, string> = { USD: "$", HKD: "HK$", CNY: "¥" };
 const customWatchlistKey = "msd-custom-watchlist";
+
+function readStoredWatchlist() {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = JSON.parse(localStorage.getItem(customWatchlistKey) ?? "[]");
+    return Array.isArray(stored) ? stored as Quote[] : [];
+  } catch {
+    localStorage.removeItem(customWatchlistKey);
+    return [];
+  }
+}
 
 function number(value: number | null, prefix = "") {
   return value === null ? "—" : `${prefix}${value.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -26,7 +37,8 @@ export function BeginnerMarket({
 }) {
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState<Quote[]>([]);
-  const [customWatchlist, setCustomWatchlist] = useState<Quote[]>([]);
+  const [customWatchlist, setCustomWatchlist] = useState<Quote[]>(readStoredWatchlist);
+  const initialCustomWatchlist = useRef(customWatchlist);
   const [selectedId, setSelectedId] = useState("");
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
@@ -57,24 +69,16 @@ export function BeginnerMarket({
 
   useEffect(() => {
     const controller = new AbortController();
-    try {
-      const stored = JSON.parse(localStorage.getItem(customWatchlistKey) ?? "[]") as Quote[];
-      if (Array.isArray(stored)) {
-        setCustomWatchlist(stored);
-        const symbols = stored.map(({ symbol }) => symbol).join(",");
-        if (symbols) {
-          fetch(`/api/market?symbols=${encodeURIComponent(symbols)}`, { cache: "no-store", signal: controller.signal })
-            .then((response) => response.ok ? response.json() : null)
-            .then((data) => {
-              if (!data?.items?.length) return;
-              setCustomWatchlist(data.items);
-              localStorage.setItem(customWatchlistKey, JSON.stringify(data.items));
-            })
-            .catch(() => undefined);
-        }
-      }
-    } catch {
-      localStorage.removeItem(customWatchlistKey);
+    const symbols = initialCustomWatchlist.current.map(({ symbol }) => symbol).join(",");
+    if (symbols) {
+      fetch(`/api/market?symbols=${encodeURIComponent(symbols)}`, { cache: "no-store", signal: controller.signal })
+        .then((response) => response.ok ? response.json() : null)
+        .then((data) => {
+          if (!data?.items?.length) return;
+          setCustomWatchlist(data.items);
+          localStorage.setItem(customWatchlistKey, JSON.stringify(data.items));
+        })
+        .catch(() => undefined);
     }
     return () => controller.abort();
   }, []);

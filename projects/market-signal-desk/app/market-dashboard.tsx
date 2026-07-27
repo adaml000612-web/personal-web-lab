@@ -1,13 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
-import { BeginnerMarket } from "./beginner-market";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import { MarketAgentPanel } from "./market-agent-panel";
 import { indexOrder, sourceLinks, watchlist, type Quote, type Signal } from "./market-config";
-import { SettingsPanel } from "./settings-panel";
 import { SETTINGS_STORAGE_KEY, defaultSettings, sanitizeSettings, type AppSettings, type MainModule } from "./settings";
 import { signalTime } from "./signal-presentation";
 import { SignalTitle } from "./signal-title";
+
+const BeginnerMarket = lazy(() =>
+  import("./beginner-market").then(({ BeginnerMarket: Component }) => ({ default: Component })));
+const SettingsPanel = lazy(() =>
+  import("./settings-panel").then(({ SettingsPanel: Component }) => ({ default: Component })));
 
 const priorityLabels = {
   1: "公司与官方披露",
@@ -130,13 +133,16 @@ export function MarketDashboard() {
   }, []);
 
   useEffect(() => {
-    try {
-      setSettings(sanitizeSettings(JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) ?? "null")));
-    } catch {
-      localStorage.removeItem(SETTINGS_STORAGE_KEY);
-    } finally {
-      setSettingsReady(true);
-    }
+    const timer = window.setTimeout(() => {
+      try {
+        setSettings(sanitizeSettings(JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) ?? "null")));
+      } catch {
+        localStorage.removeItem(SETTINGS_STORAGE_KEY);
+      } finally {
+        setSettingsReady(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -147,7 +153,10 @@ export function MarketDashboard() {
   useEffect(() => {
     const currentMainModule: MainModule = module === "prices" ? "prices" : "radar";
     if (settings.mainModules.includes(currentMainModule)) return;
-    setModule(settings.mainModules[0] === "prices" ? "prices" : "home");
+    const timer = window.setTimeout(() => {
+      setModule(settings.mainModules[0] === "prices" ? "prices" : "home");
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [module, settings.mainModules]);
 
   const loadData = useCallback(async (manual = false) => {
@@ -206,6 +215,40 @@ export function MarketDashboard() {
   }, [loadData]);
 
   const quoteMap = useMemo(() => new Map(quotes.map((quote) => [quote.id, quote])), [quotes]);
+  const { indices, stocks } = useMemo(() => ({
+    indices: indexOrder.map((id) => quoteMap.get(id)).filter((quote): quote is Quote => Boolean(quote)),
+    stocks: quotes.filter(({ type }) => type === "stock"),
+  }), [quoteMap, quotes]);
+  const readSet = useMemo(() => new Set(read), [read]);
+  const savedSet = useMemo(() => new Set(saved), [saved]);
+  const {
+    priorityCounts,
+    unreadCount,
+    radarEchoes,
+    signalCountsByTarget,
+  } = useMemo(() => {
+    const counts = [0, 0, 0, 0];
+    const echoes: Signal[][] = [[], [], [], []];
+    const targetCounts = new Map<string, number>();
+    let unreadSignals = 0;
+
+    for (const signal of signals) {
+      const priorityIndex = signal.priority - 1;
+      counts[priorityIndex] += 1;
+      if (echoes[priorityIndex].length < 7) echoes[priorityIndex].push(signal);
+      if (!readSet.has(signal.id)) unreadSignals += 1;
+      for (const target of signal.targets) {
+        targetCounts.set(target, (targetCounts.get(target) ?? 0) + 1);
+      }
+    }
+
+    return {
+      priorityCounts: counts,
+      unreadCount: unreadSignals,
+      radarEchoes: echoes.flat(),
+      signalCountsByTarget: targetCounts,
+    };
+  }, [readSet, signals]);
 
   const filteredSignals = useMemo(() => {
     return signals.filter((signal) =>
@@ -230,13 +273,6 @@ export function MarketDashboard() {
     });
   }
 
-  const indices = indexOrder.map((id) => quoteMap.get(id)).filter((quote): quote is Quote => Boolean(quote));
-  const stocks = quotes.filter(({ type }) => type === "stock");
-  const priorityCounts = [1, 2, 3, 4].map((level) =>
-    signals.filter(({ priority: signalPriority }) => signalPriority === level).length);
-  const unreadCount = signals.filter(({ id }) => !read.includes(id)).length;
-  const radarEchoes = [1, 2, 3, 4].flatMap((level) =>
-    signals.filter(({ priority: signalPriority }) => signalPriority === level).slice(0, 7));
   const dataTimestamp = lastUpdated?.toLocaleString("zh-CN", {
     month: "2-digit",
     day: "2-digit",
@@ -420,7 +456,7 @@ export function MarketDashboard() {
             </button>
             {watchlist.map((item) => {
               const quote = quoteMap.get(item.id);
-              const signalCount = signals.filter(({ targets }) => targets.includes(item.id)).length;
+              const signalCount = signalCountsByTarget.get(item.id) ?? 0;
               return (
                 <button data-watch-id={item.id} className={`watch-chip ${selected === item.id ? "is-active" : ""}`} key={item.id} onClick={() => setSelected(item.id)}>
                   {quote ? (
@@ -476,7 +512,7 @@ export function MarketDashboard() {
                     const expanded = expandedSignal === signal.id;
                     return (
                       <article
-                        className={`signal-card p${signal.priority} ${read.includes(signal.id) ? "is-read" : ""} ${expanded ? "is-expanded" : ""}`}
+                        className={`signal-card p${signal.priority} ${readSet.has(signal.id) ? "is-read" : ""} ${expanded ? "is-expanded" : ""}`}
                         key={signal.id}
                         onPointerMove={tiltCard}
                         onPointerLeave={resetTilt}
@@ -503,8 +539,8 @@ export function MarketDashboard() {
                             </div>
                           )}
                         </div>
-                        <button className={`save-button ${saved.includes(signal.id) ? "is-saved" : ""}`} onClick={() => toggleSaved(signal.id)} aria-label={saved.includes(signal.id) ? "取消收藏" : "收藏"}>
-                          {saved.includes(signal.id) ? "★" : "☆"}
+                        <button className={`save-button ${savedSet.has(signal.id) ? "is-saved" : ""}`} onClick={() => toggleSaved(signal.id)} aria-label={savedSet.has(signal.id) ? "取消收藏" : "收藏"}>
+                          {savedSet.has(signal.id) ? "★" : "☆"}
                         </button>
                       </article>
                     );
@@ -541,12 +577,14 @@ export function MarketDashboard() {
           </div>
         </>
       ) : (
-        <BeginnerMarket
-          quotes={quotes}
-          loading={loading}
-          initialSymbol={focusedSymbol}
-          onSelectedSymbolChange={setFocusedSymbol}
-        />
+        <Suspense fallback={<section className="module-loading" aria-live="polite">正在加载行情模块…</section>}>
+          <BeginnerMarket
+            quotes={quotes}
+            loading={loading}
+            initialSymbol={focusedSymbol}
+            onSelectedSymbolChange={setFocusedSymbol}
+          />
+        </Suspense>
       )}
 
       {settings.showAgent && (
@@ -562,10 +600,14 @@ export function MarketDashboard() {
         />
       )}
 
-      {settingsOpen && <SettingsPanel settings={settings} onChange={changeSettings} onClose={closeSettings} />}
+      {settingsOpen && (
+        <Suspense fallback={null}>
+          <SettingsPanel settings={settings} onChange={changeSettings} onClose={closeSettings} />
+        </Suspense>
+      )}
 
       <footer>
-          <span>前哨 v2.9.3 · MARKET SIGNAL DESK</span>
+          <span>前哨 v2.9.4 · MARKET SIGNAL DESK</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>

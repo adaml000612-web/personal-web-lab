@@ -73,3 +73,40 @@ test("rejects arbitrary model endpoints and oversized bodies", async () => {
   }), {}, { waitUntil() {}, passThroughOnException() {} });
   assert.equal(oversized.status, 413);
 });
+
+test("rejects cross-origin and non-JSON requests and returns rate-limit guidance", async () => {
+  const app = await worker();
+  const crossOrigin = await app.fetch(new Request("http://localhost/api/agent", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Origin: "https://evil.example" },
+    body: "{}",
+  }), {}, { waitUntil() {}, passThroughOnException() {} });
+  assert.equal(crossOrigin.status, 403);
+
+  const nonJson = await app.fetch(new Request("http://localhost/api/agent", {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: "{}",
+  }), {}, { waitUntil() {}, passThroughOnException() {} });
+  assert.equal(nonJson.status, 415);
+
+  const requestBody = JSON.stringify({
+    message: "一分钟看懂今天",
+    context,
+    model: { provider: "default" },
+  });
+  const responses = [];
+  for (let index = 0; index < 13; index += 1) {
+    responses.push(await app.fetch(new Request("http://localhost/api/agent", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: "http://localhost",
+        "cf-connecting-ip": "192.0.2.10",
+      },
+      body: requestBody,
+    }), {}, { waitUntil() {}, passThroughOnException() {} }));
+  }
+  assert.equal(responses.at(-1)?.status, 429);
+  assert.equal(responses.at(-1)?.headers.get("retry-after"), "60");
+});

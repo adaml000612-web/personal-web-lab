@@ -56,7 +56,9 @@ export function SettingsPanel({
 }) {
   const panelRef = useRef<HTMLElement>(null);
   const [apiKey, setApiKey] = useState("");
-  const [hasSessionKey, setHasSessionKey] = useState(false);
+  const [hasSessionKey, setHasSessionKey] = useState(() =>
+    typeof window !== "undefined"
+    && Boolean(sessionStorage.getItem(sessionSecretStorageKey(settings.customProvider))));
   const [keyNotice, setKeyNotice] = useState("");
   const [modelProviderFilter, setModelProviderFilter] = useState<CustomModelProvider | "all">("all");
 
@@ -68,12 +70,6 @@ export function SettingsPanel({
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [onClose]);
-
-  useEffect(() => {
-    setApiKey("");
-    setKeyNotice("");
-    setHasSessionKey(Boolean(sessionStorage.getItem(sessionSecretStorageKey(settings.customProvider))));
-  }, [settings.customProvider]);
 
   function patch(next: Partial<AppSettings>) {
     onChange({ ...settings, ...next });
@@ -101,6 +97,11 @@ export function SettingsPanel({
   function changeModel(model: CustomModelId) {
     const definition = getModelDefinition(model);
     if (!definition) return;
+    if (definition.provider !== settings.customProvider) {
+      setApiKey("");
+      setKeyNotice("");
+      setHasSessionKey(Boolean(sessionStorage.getItem(sessionSecretStorageKey(definition.provider))));
+    }
     patch({ customProvider: definition.provider, customModel: definition.id });
   }
 
