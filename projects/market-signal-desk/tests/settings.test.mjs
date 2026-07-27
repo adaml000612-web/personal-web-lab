@@ -31,8 +31,11 @@ test("deduplicates and preserves the chosen module order", () => {
 
 test("only accepts catalog models for their matching provider", () => {
   assert.equal(isSupportedModel("deepseek", "deepseek-v4-flash"), true);
-  assert.equal(isSupportedModel("openai", "gpt-5-mini"), true);
-  assert.equal(isSupportedModel("deepseek", "gpt-5-mini"), false);
+  assert.equal(isSupportedModel("openai", "gpt-5.6-terra"), true);
+  assert.equal(isSupportedModel("anthropic", "claude-fable-5"), true);
+  assert.equal(isSupportedModel("google", "gemini-3.6-flash"), true);
+  assert.equal(isSupportedModel("zai", "glm-5.2"), true);
+  assert.equal(isSupportedModel("deepseek", "gpt-5.6-terra"), false);
   assert.equal(isSupportedModel("openai", "https://internal.example/model"), false);
   assert.notEqual(sessionSecretStorageKey("deepseek"), sessionSecretStorageKey("openai"));
 });
@@ -40,5 +43,5 @@ test("only accepts catalog models for their matching provider", () => {
 test("repairs a provider and model mismatch", () => {
   const settings = sanitizeSettings({ customProvider: "openai", customModel: "deepseek-v4-pro" });
   assert.equal(settings.customProvider, "openai");
-  assert.equal(settings.customModel, "gpt-5.1");
+  assert.equal(settings.customModel, "gpt-5.6-sol");
 });

@@ -61,7 +61,7 @@ test("rejects arbitrary model endpoints and oversized bodies", async () => {
     body: JSON.stringify({
       message: "hi",
       context,
-      model: { provider: "deepseek", model: "gpt-5-mini", apiKey: "x".repeat(30) },
+      model: { provider: "deepseek", model: "gpt-5.6-terra", apiKey: "x".repeat(30) },
     }),
   }), {}, { waitUntil() {}, passThroughOnException() {} });
   assert.equal(mismatchedModel.status, 400);

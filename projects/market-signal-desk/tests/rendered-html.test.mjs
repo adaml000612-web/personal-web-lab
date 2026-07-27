@@ -20,7 +20,7 @@ test("server-renders the market signal desk", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "今日重点", "全部信号", "公司级", "尚未阅读", "LIVE PULSE", "v2.8.1", "实时情报雷达", "每 5 圈自动刷新新闻", "问前哨"]) {
+  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "今日重点", "全部信号", "公司级", "尚未阅读", "LIVE PULSE", "v2.9.0", "实时情报雷达", "每 5 圈自动刷新新闻", "问前哨"]) {
     assert.match(html, new RegExp(content));
   }
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
@@ -77,11 +77,17 @@ test("keeps market coverage configurable and honest", async () => {
   assert.match(agentPanel, /只做信息解释和风险陪练/);
   assert.match(agentRoute, /OPENAI_API_KEY/);
   assert.match(agentRoute, /api\.deepseek\.com\/v1\/chat\/completions/);
+  assert.match(agentRoute, /api\.anthropic\.com\/v1\/messages/);
+  assert.match(agentRoute, /generativelanguage\.googleapis\.com/);
+  assert.match(agentRoute, /api\.z\.ai\/api\/paas\/v4\/chat\/completions/);
+  assert.match(agentRoute, /api\.x\.ai\/v1\/chat\/completions/);
+  assert.match(agentRoute, /dashscope\.aliyuncs\.com\/compatible-mode\/v1\/chat\/completions/);
+  assert.match(agentRoute, /api\.minimaxi\.com\/v1\/chat\/completions/);
   assert.match(agentRoute, /new TextEncoder\(\)\.encode\(rawBody\)/);
   assert.match(agentRoute, /supportedModels/);
   assert.match(agentRoute, /Cache-Control": "no-store"/);
   assert.match(agentRoute, /buildFallbackAgentAnswer/);
-  assert.match(agentRoute, /gpt-5\.1/);
+  assert.match(agentRoute, /gpt-5\.6-luna/);
   assert.match(agentPanel, /sessionSecretStorageKey/);
   assert.match(settings, /fontSize:\s*14/);
   assert.match(settings, /mainModules:\s*\["radar", "prices"\]/);
@@ -89,7 +95,12 @@ test("keeps market coverage configurable and honest", async () => {
   assert.match(settingsPanel, /选择具体模型/);
   assert.match(settingsPanel, /填写.*API Key/);
   assert.match(settingsPanel, /modelCatalog/);
+  assert.match(settingsPanel, /最近三个月发布或更新/);
+  assert.match(settings, /claude-fable-5/);
+  assert.match(settings, /claude-opus-4-8/);
+  assert.match(settings, /gemini-3\.6-flash/);
+  assert.match(settings, /glm-5\.2/);
   assert.match(settingsPanel, /关闭这个浏览器标签页后自动失效/);
-  assert.doesNotMatch(settings, /apiKey/i);
+  assert.doesNotMatch(settings, /\bapiKey\s*:/);
   assert.doesNotMatch(agentRoute, /sk-[A-Za-z0-9]/);
 });

@@ -5,7 +5,9 @@ import {
   colorPresets,
   defaultSettings,
   getModelDefinition,
+  modelRecencyLabel,
   modelCatalog,
+  providerOrder,
   sessionSecretStorageKey,
   type AppSettings,
   type CustomModelId,
@@ -211,12 +213,13 @@ export function SettingsPanel({
                   <span>1</span>
                   <div><strong>选择具体模型</strong><small>不同模型速度、能力和费用不同，费用由对应服务商收取。</small></div>
                 </div>
+                <p className="settings-catalog-policy">收录规则：最近三个月发布或更新，或仍在使用的最近两代；仅保留已开放官方 API 的文本模型。</p>
                 <div className="settings-model-catalog" role="radiogroup" aria-label="选择自备模型">
-                  {(["deepseek", "openai"] as const).map((provider) => (
+                  {providerOrder.map((provider) => (
                     <div className="settings-provider-group" key={provider}>
                       <header>
-                        <strong>{provider === "deepseek" ? "DeepSeek" : "OpenAI"}</strong>
-                        <small>官方 API</small>
+                        <strong>{modelCatalog.find((model) => model.provider === provider)?.providerName}</strong>
+                        <small>{modelCatalog.filter((model) => model.provider === provider).length} 个</small>
                       </header>
                       <div>
                         {modelCatalog.filter((model) => model.provider === provider).map((model) => (
@@ -228,9 +231,9 @@ export function SettingsPanel({
                             key={model.id}
                             onClick={() => changeModel(model.id)}
                           >
-                            <span><strong>{model.name}</strong><b>{model.badge}</b></span>
-                            <small>{model.description}</small>
-                            <code>{model.id}</code>
+                            <i aria-hidden="true" />
+                            <span><strong>{model.name}</strong><small>擅长：{model.strength}</small></span>
+                            <b>{modelRecencyLabel(model)}</b>
                           </button>
                         ))}
                       </div>
@@ -239,7 +242,7 @@ export function SettingsPanel({
                 </div>
                 <div className="settings-model-step">
                   <span>2</span>
-                  <div><strong>填写 {selectedModel.providerName} API Key</strong><small>你已选择 {selectedModel.name}，这里只接受对应服务商的密钥。</small></div>
+                  <div><strong>填写 {selectedModel.providerName} API Key</strong><small>已选择 {selectedModel.name} · {selectedModel.id}</small></div>
                   <a href={selectedModel.keyUrl} target="_blank" rel="noreferrer">获取 API Key ↗</a>
                 </div>
                 <label className="settings-api-key"><span>{selectedModel.providerName} API Key</span><input type="password" value={apiKey} maxLength={256} autoComplete="off" spellCheck={false} onChange={(event) => setApiKey(event.target.value)} placeholder={hasSessionKey ? `本次会话已有 ${selectedModel.providerName} 密钥，输入可替换` : `粘贴 ${selectedModel.providerName} API Key`} /></label>
