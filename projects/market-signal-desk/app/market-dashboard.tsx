@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import { BeginnerMarket } from "./beginner-market";
+import { MarketAgentPanel } from "./market-agent-panel";
 import { indexOrder, sourceLinks, watchlist, type Quote, type Signal } from "./market-config";
 import { signalTime } from "./signal-presentation";
 import { SignalTitle } from "./signal-title";
@@ -490,11 +491,18 @@ export function MarketDashboard() {
           </div>
         </>
       ) : (
-        <BeginnerMarket quotes={quotes} loading={loading} initialSymbol={focusedSymbol} />
+        <BeginnerMarket
+          quotes={quotes}
+          loading={loading}
+          initialSymbol={focusedSymbol}
+          onSelectedSymbolChange={setFocusedSymbol}
+        />
       )}
 
+      <MarketAgentPanel quotes={quotes} signals={signals} activeSymbol={focusedSymbol || stocks[0]?.symbol} />
+
       <footer>
-          <span>前哨 v2.5.2 · MARKET SIGNAL DESK</span>
+          <span>前哨 v2.6.0 · MARKET SIGNAL DESK</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>

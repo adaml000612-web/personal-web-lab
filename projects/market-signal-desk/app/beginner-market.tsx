@@ -13,7 +13,17 @@ function number(value: number | null, prefix = "") {
   return value === null ? "—" : `${prefix}${value.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes: Quote[]; loading: boolean; initialSymbol?: string }) {
+export function BeginnerMarket({
+  quotes,
+  loading,
+  initialSymbol = "",
+  onSelectedSymbolChange,
+}: {
+  quotes: Quote[];
+  loading: boolean;
+  initialSymbol?: string;
+  onSelectedSymbolChange?: (symbol: string) => void;
+}) {
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState<Quote[]>([]);
   const [customWatchlist, setCustomWatchlist] = useState<Quote[]>([]);
@@ -40,6 +50,10 @@ export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes
   const isWatched = selected ? watchedStocks.some(({ symbol }) => symbol === selected.symbol) : false;
   const indices = quotes.filter(({ type }) => type === "index");
   const marketAnalysis = buildMarketAnalysis(selected, indices);
+
+  useEffect(() => {
+    if (selected) onSelectedSymbolChange?.(selected.symbol);
+  }, [onSelectedSymbolChange, selected]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -117,6 +131,7 @@ export function BeginnerMarket({ quotes, loading, initialSymbol = "" }: { quotes
     setCustomWatchlist((current) => {
       const next = [...new Map([...current, selected].map((quote) => [quote.symbol, quote])).values()];
       localStorage.setItem(customWatchlistKey, JSON.stringify(next));
+      window.dispatchEvent(new Event("msd-watchlist-change"));
       return next;
     });
   }
