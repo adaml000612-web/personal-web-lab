@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties, type Poi
 import { BeginnerMarket } from "./beginner-market";
 import { MarketAgentPanel } from "./market-agent-panel";
 import { indexOrder, sourceLinks, watchlist, type Quote, type Signal } from "./market-config";
+import { SettingsPanel } from "./settings-panel";
+import { SETTINGS_STORAGE_KEY, defaultSettings, sanitizeSettings, type AppSettings, type MainModule } from "./settings";
 import { signalTime } from "./signal-presentation";
 import { SignalTitle } from "./signal-title";
 
@@ -14,6 +16,7 @@ const priorityLabels = {
   4: "海外映射",
 } as const;
 const priorityShortLabels = ["", "公司披露", "产业链", "市场指数", "海外映射"] as const;
+const moduleLabels: Record<MainModule, string> = { radar: "情报雷达", prices: "行情入门" };
 
 function displayNumber(value: number) {
   return new Intl.NumberFormat("zh-CN", {
@@ -95,6 +98,9 @@ export function MarketDashboard() {
   const [radarSeed, setRadarSeed] = useState(0);
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
+  const [settingsReady, setSettingsReady] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -122,6 +128,27 @@ export function MarketDashboard() {
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    try {
+      setSettings(sanitizeSettings(JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) ?? "null")));
+    } catch {
+      localStorage.removeItem(SETTINGS_STORAGE_KEY);
+    } finally {
+      setSettingsReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!settingsReady) return;
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  }, [settings, settingsReady]);
+
+  useEffect(() => {
+    const currentMainModule: MainModule = module === "prices" ? "prices" : "radar";
+    if (settings.mainModules.includes(currentMainModule)) return;
+    setModule(settings.mainModules[0] === "prices" ? "prices" : "home");
+  }, [module, settings.mainModules]);
 
   const loadData = useCallback(async (manual = false) => {
     if (manual) {
@@ -239,8 +266,21 @@ export function MarketDashboard() {
     window.setTimeout(() => document.querySelector("#signal-feed")?.scrollIntoView({ behavior: "smooth" }), 0);
   }
 
+  const changeSettings = useCallback((next: AppSettings) => {
+    setSettings(sanitizeSettings(next));
+  }, []);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  const shellStyle = {
+    "--iris": settings.primaryColor,
+    "--iris-bright": settings.primaryColor,
+    "--mint": settings.primaryColor,
+    "--cyan": settings.secondaryColor,
+    "--pink": settings.secondaryColor,
+    "--font-floor": `${settings.fontSize}px`,
+  } as CSSProperties;
+
   return (
-    <main className="app-shell cosmic-shell" onPointerMove={followPointer}>
+    <main className="app-shell cosmic-shell" style={shellStyle} onPointerMove={followPointer}>
       <div className="ambient-field" aria-hidden="true"><i /><i /><i /></div>
       <header className="topbar">
         <a className="brand" href="#top" aria-label="前哨首页" onClick={() => setModule("home")}>
@@ -248,8 +288,15 @@ export function MarketDashboard() {
           <span className="brand-scope"><strong>沪 · 港 · 美</strong><small>市场信号台</small></span>
         </a>
         <nav className="module-nav" aria-label="应用板块">
-          <button className={module === "home" || module === "signals" ? "is-active" : ""} onClick={() => setModule("home")}><span>情报雷达</span></button>
-          <button className={module === "prices" ? "is-active" : ""} onClick={() => setModule("prices")}><span>行情入门</span></button>
+          {settings.mainModules.map((item) => (
+            <button
+              className={item === "radar" ? module === "home" || module === "signals" ? "is-active" : "" : module === "prices" ? "is-active" : ""}
+              key={item}
+              onClick={() => setModule(item === "radar" ? "home" : "prices")}
+            >
+              <span>{moduleLabels[item]}</span>
+            </button>
+          ))}
         </nav>
         <div className="top-actions">
           <div className="market-clock" aria-label="数据状态">
@@ -260,10 +307,13 @@ export function MarketDashboard() {
             <span className={refreshing ? "refresh-icon spinning" : "refresh-icon"} aria-hidden="true">↻</span>
             {refreshing ? "刷新中" : module === "prices" ? "刷新行情" : "立即扫描"}
           </button>
+          <button className="settings-button" type="button" onClick={() => setSettingsOpen(true)} aria-haspopup="dialog" aria-label="打开基础设置">
+            <span aria-hidden="true">✦</span><b>设置</b>
+          </button>
         </div>
       </header>
 
-      <section className="market-pulse" aria-label="主要市场脉冲">
+      {settings.showPulse && <section className="market-pulse" aria-label="主要市场脉冲">
         <div className="pulse-live">
           <span className={error ? "status-dot status-dot--warn" : "status-dot"} />
           <strong>{error ? "数据延迟" : "LIVE PULSE"}</strong>
@@ -286,7 +336,7 @@ export function MarketDashboard() {
           </div>
         </div>
         <span className="pulse-stamp">{lastUpdated ? lastUpdated.toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) : "--:--"}</span>
-      </section>
+      </section>}
 
       {module === "home" ? (
         <section className="radar-home" id="top">
@@ -338,7 +388,7 @@ export function MarketDashboard() {
             <span className="radar-bearing bearing-w" aria-hidden="true">W</span>
           </div>
 
-          <div className="home-stock-rail" aria-label="关注股票，连续滚动，悬停暂停">
+          {settings.showStockRail && <div className="home-stock-rail" aria-label="关注股票，连续滚动，悬停暂停">
             <div className="stock-rail-label"><span>WATCHLIST</span><strong>点击查看行情</strong></div>
             <div className="stock-rail-window">
               <div className="stock-rail-track">
@@ -353,14 +403,14 @@ export function MarketDashboard() {
                 )) : <span className="pulse-placeholder">正在连接关注股票</span>}
               </div>
             </div>
-          </div>
+          </div>}
         </section>
       ) : module === "signals" ? (
         <>
           <header className="detail-header" id="top">
             <button onClick={() => setModule("home")}>← 返回雷达</button>
             <div><p className="eyebrow">INTELLIGENCE DETAIL</p><h1>情报详情</h1><p>从雷达进入后，在这里筛选公司、核对来源和判断依据。</p></div>
-            <span>{priority === "all" ? "全部信号" : `P${priority} · ${priorityLabels[priority]}`}</span>
+            <span>{priority === "all" ? "全部信号" : `P${priority} · ${priorityLabels[priority as keyof typeof priorityLabels]}`}</span>
           </header>
 
           <section className="watch-orbit" aria-label="我的关注标的">
@@ -499,10 +549,23 @@ export function MarketDashboard() {
         />
       )}
 
-      <MarketAgentPanel quotes={quotes} signals={signals} activeSymbol={focusedSymbol || stocks[0]?.symbol} />
+      {settings.showAgent && (
+        <MarketAgentPanel
+          quotes={quotes}
+          signals={signals}
+          activeSymbol={focusedSymbol || stocks[0]?.symbol}
+          modelSettings={{
+            mode: settings.modelMode,
+            provider: settings.customProvider,
+            model: settings.customModel,
+          }}
+        />
+      )}
+
+      {settingsOpen && <SettingsPanel settings={settings} onChange={changeSettings} onClose={closeSettings} />}
 
       <footer>
-          <span>前哨 v2.7.0 · MARKET SIGNAL DESK</span>
+          <span>前哨 v2.8.0 · MARKET SIGNAL DESK</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>

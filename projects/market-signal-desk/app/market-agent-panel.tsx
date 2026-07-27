@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { AgentContext, AgentSource } from "./market-agent";
 import type { Quote, Signal } from "./market-config";
+import { SESSION_API_KEY, type CustomModelProvider } from "./settings";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -25,10 +26,16 @@ export function MarketAgentPanel({
   quotes,
   signals,
   activeSymbol,
+  modelSettings,
 }: {
   quotes: Quote[];
   signals: Signal[];
   activeSymbol?: string;
+  modelSettings: {
+    mode: "default" | "custom";
+    provider: CustomModelProvider;
+    model: string;
+  };
 }) {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -74,6 +81,17 @@ export function MarketAgentPanel({
     setMessages(nextMessages);
     setInput("");
     setLoading(true);
+    const sessionApiKey = modelSettings.mode === "custom"
+      ? sessionStorage.getItem(SESSION_API_KEY)?.trim() ?? ""
+      : "";
+    if (modelSettings.mode === "custom" && !sessionApiKey) {
+      setMessages((current) => [...current, {
+        role: "assistant",
+        content: "你选择了自备模型，但本次会话还没有 API Key。请到设置里保存密钥，或切回网站默认智能体。",
+      }]);
+      setLoading(false);
+      return;
+    }
 
     const context: AgentContext = {
       quotes: [...new Map([...quotes, ...customWatchlist].map((quote) => [quote.symbol, quote])).values()].slice(0, 20),
@@ -92,6 +110,11 @@ export function MarketAgentPanel({
           message: question,
           context,
           history: messages.slice(-6).map(({ role, content }) => ({ role, content })),
+          model: modelSettings.mode === "custom" ? {
+            provider: modelSettings.provider,
+            model: modelSettings.model,
+            apiKey: sessionApiKey,
+          } : { provider: "default" },
         }),
       });
       const data = await response.json();
@@ -133,6 +156,7 @@ export function MarketAgentPanel({
 
           <div className="agent-context-strip">
             <span>已连接</span>
+            <strong>{modelSettings.mode === "custom" ? `自备 ${modelSettings.provider === "deepseek" ? "DeepSeek" : "OpenAI"}` : "网站默认模型"}</strong>
             <strong>{quotes.filter(({ type }) => type === "stock").length + customWatchlist.length} 只关注</strong>
             <strong>{signals.length} 条情报</strong>
             {activeSymbol && <strong>正在查看 {activeSymbol}</strong>}
