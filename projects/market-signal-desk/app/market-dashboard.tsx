@@ -116,6 +116,7 @@ export function MarketDashboard() {
           setQuotes(marketCache.items);
           setUnavailable(marketCache.unavailable ?? []);
           setLastUpdated(new Date(marketCache.fetchedAt));
+          setLoading(false);
         }
         if (Array.isArray(newsCache?.signals)) {
           setSignals(newsCache.signals);
@@ -176,6 +177,7 @@ export function MarketDashboard() {
         setUnavailable(data.unavailable ?? []);
         setLastUpdated(new Date(data.fetchedAt ?? Date.now()));
         localStorage.setItem("msd-market-cache", JSON.stringify(data));
+        setLoading(false);
       })();
       const newsTask = (async () => {
         const response = await fetch(`/api/news${refreshQuery}`, { cache: cacheMode });
@@ -184,6 +186,7 @@ export function MarketDashboard() {
         setSignals(data.signals ?? []);
         setLastUpdated(new Date(data.fetchedAt ?? Date.now()));
         localStorage.setItem("msd-news-cache", JSON.stringify(data));
+        setLoading(false);
       })();
       const results = await Promise.allSettled([marketTask, newsTask]);
       if (results.every(({ status }) => status === "rejected")) throw new Error("数据服务暂时不可用");
@@ -607,7 +610,7 @@ export function MarketDashboard() {
       )}
 
       <footer>
-          <span>前哨 v3.0.0 · MARKET SIGNAL DESK</span>
+          <span>前哨 v3.0.1 · MARKET SIGNAL DESK</span>
         <p>本工具仅用于信息整理，不构成投资建议。交易前请核对官方披露并独立判断。</p>
         {unavailable.length > 0 && <span>{unavailable.length} 个行情源暂不可用</span>}
       </footer>

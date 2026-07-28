@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   colorPresets,
   defaultSettings,
@@ -271,6 +272,19 @@ export function SettingsPanel({
                 <p className="settings-security-note"><strong>密钥不会写入长期设置或 GitHub。</strong>关闭这个浏览器标签页后自动失效，只会经本站服务器转发到 {selectedModel.providerName} 官方接口。切换模型时会自动使用该服务商对应的密钥，公共设备不要使用。</p>
               </div>
             )}
+          </section>
+
+          <section className="settings-section settings-admin-access">
+            <div>
+              <span>仅限站长</span>
+              <strong>管理员控制台</strong>
+              <small>查看访问量、接口速度和错误记录，管理网站默认 DeepSeek。</small>
+            </div>
+            <Link href="/admin" onClick={onClose}>
+              <i aria-hidden="true">↗</i>
+              使用 ChatGPT 账号登录
+            </Link>
+            <p>正式网站会先验证 ChatGPT 登录，再核对管理员邮箱；其他账号无法进入或修改。</p>
           </section>
         </div>
 

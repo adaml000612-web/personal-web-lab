@@ -45,7 +45,18 @@ const worker = {
 
     const startedAt = Date.now();
     try {
-      const response = withSecurityHeaders(await handler.fetch(request, env, ctx), request);
+      const edgeCache = shouldEdgeCache(request, url) ? caches.default : null;
+      const cached = edgeCache ? await edgeCache.match(request) : null;
+      const response = cached
+        ? withCacheStatus(cached, "HIT", request)
+        : withCacheStatus(
+            withSecurityHeaders(await handler.fetch(request, env, ctx), request),
+            edgeCache ? "MISS" : "BYPASS",
+            request,
+          );
+      if (edgeCache && !cached && response.ok) {
+        ctx.waitUntil(edgeCache.put(request, response.clone()));
+      }
       if (shouldMonitor(url.pathname)) {
         ctx.waitUntil(recordMetric({
           route: url.pathname,
@@ -71,7 +82,25 @@ const worker = {
 function shouldMonitor(pathname: string) {
   return !pathname.startsWith("/_")
     && !pathname.startsWith("/favicon")
+    && !pathname.endsWith(".rsc")
     && !/\.(?:css|js|map|png|jpg|jpeg|webp|svg|ico|woff2?)$/i.test(pathname);
+}
+
+function shouldEdgeCache(request: Request, url: URL) {
+  if (request.method !== "GET" || url.searchParams.has("refresh")) return false;
+  if (url.pathname === "/api/news") return true;
+  return url.pathname === "/api/market" && !url.searchParams.has("symbols");
+}
+
+function withCacheStatus(response: Response, status: "HIT" | "MISS" | "BYPASS", request: Request) {
+  const secured = withSecurityHeaders(response, request);
+  const headers = new Headers(secured.headers);
+  headers.set("X-Frontier-Cache", status);
+  return new Response(secured.body, {
+    status: secured.status,
+    statusText: secured.statusText,
+    headers,
+  });
 }
 
 export default worker;

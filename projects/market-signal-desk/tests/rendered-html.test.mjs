@@ -20,7 +20,7 @@ test("server-renders the market signal desk", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "今日重点", "全部信号", "公司级", "尚未阅读", "LIVE PULSE", "v3.0.0", "实时情报雷达", "每 5 圈自动刷新新闻", "问前哨"]) {
+  for (const content of ["前哨 · 投资情报雷达", "情报雷达", "行情入门", "今日重点", "全部信号", "公司级", "尚未阅读", "LIVE PULSE", "v3.0.1", "实时情报雷达", "每 5 圈自动刷新新闻", "问前哨"]) {
     assert.match(html, new RegExp(content));
   }
   assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
@@ -78,6 +78,8 @@ test("keeps market coverage configurable and honest", async () => {
   assert.match(agentPanel, /一分钟看懂今天/);
   assert.match(agentPanel, /买前风险检查/);
   assert.match(agentPanel, /只做信息解释和风险陪练/);
+  assert.match(settingsPanel, /href="\/admin"/);
+  assert.match(settingsPanel, /使用 ChatGPT 账号登录/);
   assert.match(agentRoute, /OPENAI_API_KEY/);
   assert.match(agentProviders, /api\.deepseek\.com\/chat\/completions/);
   assert.match(agentProviders, /api\.anthropic\.com\/v1\/messages/);

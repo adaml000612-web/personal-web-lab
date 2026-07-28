@@ -2298,6 +2298,48 @@ footer { border-color: var(--line); color: #71817b; }
 .settings-key-notice { margin: 0 0 0 160px; color: var(--iris); font-size: var(--font-floor); }
 .settings-security-note { margin: 2px 0 0; padding: 12px 13px; border-radius: 12px; background: #fff8e9; color: #77684a; font-size: var(--font-floor); line-height: 1.65; }
 .settings-security-note strong { color: #7e5c1d; }
+.settings-admin-access {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px 24px;
+  border: 1px solid color-mix(in srgb, var(--iris) 22%, var(--line));
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 0 0, color-mix(in srgb, var(--iris) 10%, transparent), transparent 46%),
+    var(--theme-panel);
+}
+.settings-admin-access > div { display: grid; gap: 5px; }
+.settings-admin-access > div > span { color: var(--iris); font: 760 var(--font-floor) var(--mono); letter-spacing: .12em; }
+.settings-admin-access > div > strong { color: var(--theme-ink); font-size: 20px; }
+.settings-admin-access > div > small { color: var(--muted); font-size: var(--font-floor); line-height: 1.55; }
+.settings-admin-access > a {
+  min-height: 46px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-radius: 999px;
+  background: linear-gradient(120deg, var(--iris), var(--cyan));
+  color: #fff;
+  font-size: var(--font-floor);
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--iris) 20%, transparent);
+}
+.settings-admin-access > a:hover { transform: translateY(-2px); }
+.settings-admin-access > a i { font-style: normal; }
+.settings-admin-access > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--font-floor);
+  line-height: 1.6;
+}
 .settings-footer {
   min-height: 76px;
   padding: 12px 28px;
@@ -2323,7 +2365,7 @@ footer { border-color: var(--line); color: #71817b; }
 }
 .settings-footer button:last-child { border-color: var(--iris); background: var(--iris); color: #fff; }
 
-/* v3.0.0 — the selected palette owns the whole product surface.
+/* v3.0.1 — the selected palette owns the whole product surface.
    Financial rise/fall colors stay semantic; every decorative green derives from
    the user's primary and secondary colors instead of a hard-coded brand tint. */
 .app-shell {
@@ -2586,6 +2628,8 @@ footer { border-color: var(--line); color: #71817b; }
   .settings-footer { min-height: 68px; padding: 10px 15px; }
   .settings-footer span { display: none; }
   .settings-footer { grid-template-columns: 1fr auto; }
+  .settings-admin-access { grid-template-columns: 1fr; }
+  .settings-admin-access > a { width: 100%; }
 }
 
 /* Functional market motion remains slow and readable even when decorative motion is reduced. */

@@ -11,6 +11,9 @@ type Overview = {
     errors: number;
     errorRate: number;
     averageMs: number;
+    pageAverageMs: number;
+    apiAverageMs: number;
+    aiAverageMs: number;
   };
   trend: Array<{
     day: string;
@@ -18,6 +21,13 @@ type Overview = {
     apiCalls: number;
     aiCalls: number;
     errors: number;
+  }>;
+  endpoints: Array<{
+    route: string;
+    kind: string;
+    count: number;
+    errors: number;
+    averageMs: number;
   }>;
   errors: Array<{
     id: number;
@@ -177,7 +187,10 @@ export function AdminConsole({
           <span>04</span><small>异常请求</small><strong>{data.overview.today.errors}</strong>
           <em>{(data.overview.today.errorRate * 100).toFixed(1)}% 错误率</em>
         </article>
-        <article><span>05</span><small>平均响应</small><strong>{data.overview.today.averageMs}</strong><em>毫秒</em></article>
+        <article>
+          <span>05</span><small>页面响应</small><strong>{data.overview.today.pageAverageMs}</strong>
+          <em>接口平均 {data.overview.today.apiAverageMs} ms</em>
+        </article>
       </section>
 
       <div className="admin-grid">
@@ -259,6 +272,31 @@ export function AdminConsole({
           </div>
         </section>
       </div>
+
+      <section className="admin-card admin-performance">
+        <header>
+          <div><small>RESPONSE BREAKDOWN</small><h2>响应时间拆解</h2></div>
+          <span>今日 · 慢项优先</span>
+        </header>
+        {data.overview.endpoints.length ? (
+          <div className="admin-performance-list">
+            {data.overview.endpoints.map((endpoint) => (
+              <div className="admin-performance-row" key={`${endpoint.kind}:${endpoint.route}`}>
+                <span className={`admin-kind admin-kind-${endpoint.kind}`}>
+                  {endpoint.kind === "page" ? "页面" : endpoint.kind === "ai" ? "AI" : "接口"}
+                </span>
+                <strong>{endpoint.route}</strong>
+                <span>{endpoint.count} 次</span>
+                <b className={endpoint.averageMs > 1_000 ? "is-slow" : endpoint.averageMs > 400 ? "is-medium" : "is-fast"}>
+                  {endpoint.averageMs} ms
+                </b>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="admin-empty">今天还没有足够的响应数据。</p>
+        )}
+      </section>
 
       <section className="admin-card admin-errors">
         <header>

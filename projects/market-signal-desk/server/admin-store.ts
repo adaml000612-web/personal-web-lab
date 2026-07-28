@@ -92,19 +92,25 @@ export async function getAdminOverview() {
   const db = await ensureAdminTables();
   const since = shanghaiDay(new Date(Date.now() - 6 * 86_400_000));
   const [metrics, errors] = await Promise.all([
-    db.prepare(`SELECT day, kind, status_group, SUM(count) AS count, SUM(total_ms) AS total_ms
+    db.prepare(`SELECT day, route, kind, status_group, SUM(count) AS count, SUM(total_ms) AS total_ms
       FROM admin_metrics WHERE day >= ?
-      GROUP BY day, kind, status_group ORDER BY day ASC`)
+      GROUP BY day, route, kind, status_group ORDER BY day ASC`)
       .bind(since)
-      .all<{ day: string; kind: string; status_group: string; count: number; total_ms: number }>(),
+      .all<{ day: string; route: string; kind: string; status_group: string; count: number; total_ms: number }>(),
     db.prepare(`SELECT id, happened_at, route, status, duration_ms, message
       FROM admin_errors ORDER BY id DESC LIMIT 20`)
       .all<{ id: number; happened_at: string; route: string; status: number; duration_ms: number; message: string }>(),
   ]);
   const today = shanghaiDay();
-  const rows = metrics.results ?? [];
+  const rows = (metrics.results ?? []).filter(({ route }) => !route.endsWith(".rsc"));
   const todayRows = rows.filter(({ day }) => day === today);
   const sum = (kind: string) => todayRows.filter((row) => row.kind === kind).reduce((total, row) => total + row.count, 0);
+  const averageFor = (kind: string) => {
+    const kindRows = todayRows.filter((row) => row.kind === kind);
+    const count = kindRows.reduce((total, row) => total + row.count, 0);
+    const duration = kindRows.reduce((total, row) => total + row.total_ms, 0);
+    return count ? Math.round(duration / count) : 0;
+  };
   const todayTotal = todayRows.reduce((total, row) => total + row.count, 0);
   const todayDuration = todayRows.reduce((total, row) => total + row.total_ms, 0);
   const todayErrors = todayRows.filter(({ status_group }) => status_group === "4xx" || status_group === "5xx")
@@ -123,6 +129,22 @@ export async function getAdminOverview() {
         .reduce((total, row) => total + row.count, 0),
     };
   });
+  const endpointMap = new Map<string, { route: string; kind: string; count: number; errors: number; totalMs: number }>();
+  for (const row of todayRows) {
+    const key = `${row.kind}:${row.route}`;
+    const current = endpointMap.get(key) ?? { route: row.route, kind: row.kind, count: 0, errors: 0, totalMs: 0 };
+    current.count += row.count;
+    current.totalMs += row.total_ms;
+    if (row.status_group === "4xx" || row.status_group === "5xx") current.errors += row.count;
+    endpointMap.set(key, current);
+  }
+  const endpoints = Array.from(endpointMap.values())
+    .map(({ totalMs, ...endpoint }) => ({
+      ...endpoint,
+      averageMs: endpoint.count ? Math.round(totalMs / endpoint.count) : 0,
+    }))
+    .sort((left, right) => right.averageMs - left.averageMs)
+    .slice(0, 8);
 
   return {
     today: {
@@ -132,8 +154,12 @@ export async function getAdminOverview() {
       errors: todayErrors,
       errorRate: todayTotal ? todayErrors / todayTotal : 0,
       averageMs: todayTotal ? Math.round(todayDuration / todayTotal) : 0,
+      pageAverageMs: averageFor("page"),
+      apiAverageMs: averageFor("api"),
+      aiAverageMs: averageFor("ai"),
     },
     trend,
+    endpoints,
     errors: errors.results ?? [],
   };
 }
