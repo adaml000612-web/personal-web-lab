@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   const selectedInstruments = symbols ? parseStockSymbols(symbols) : [...instruments];
   if (symbols && selectedInstruments.length === 0) {
     return NextResponse.json(
-      { items: [], unavailable: [], error: "请输入美股代码、5 位港股代码或 6 位 A 股代码" },
+      { items: [], unavailable: [], error: "请输入公司名称，或美股、港股、A 股代码" },
       { status: 400 },
     );
   }

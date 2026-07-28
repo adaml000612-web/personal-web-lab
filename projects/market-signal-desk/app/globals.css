@@ -2306,7 +2306,7 @@ footer { border-color: var(--line); color: #71817b; }
 }
 .settings-footer button:last-child { border-color: var(--iris); background: var(--iris); color: #fff; }
 
-/* v2.9.5 — the selected palette owns the whole product surface.
+/* v2.9.6 — the selected palette owns the whole product surface.
    Financial rise/fall colors stay semantic; every decorative green derives from
    the user's primary and secondary colors instead of a hard-coded brand tint. */
 .app-shell {

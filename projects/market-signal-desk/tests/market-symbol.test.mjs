@@ -9,6 +9,17 @@ test("normalizes beginner-friendly US, Hong Kong and A-share symbols", () => {
   );
 });
 
+test("resolves Chinese, English and spaced company names", () => {
+  assert.deepEqual(
+    ["英伟达", "NVIDIA Corporation", "腾讯控股", "Google", "中际旭创", "Advanced Micro Devices"].map((value) => parseStockSymbol(value)?.query),
+    ["usNVDA", "usNVDA", "hk00700", "usGOOGL", "sz300308", "usAMD"],
+  );
+  assert.deepEqual(
+    parseStockSymbols("特斯拉，阿里巴巴").map(({ query }) => query),
+    ["usTSLA", "usBABA"],
+  );
+});
+
 test("rejects unsafe inputs and limits batch queries", () => {
   assert.equal(parseStockSymbol("https://example.com"), null);
   assert.equal(parseStockSymbol("NVDA<script>"), null);

@@ -124,7 +124,7 @@ export function BeginnerMarket({
       setSearched((current) => [...data.items, ...current]);
       setSelectedId(data.items[0].id);
     } catch (error) {
-      setSearchError(error instanceof Error ? error.message : "查询失败，请检查代码");
+      setSearchError(error instanceof Error ? error.message : "查询失败，请检查公司名称或股票代码");
     } finally {
       setSearching(false);
     }
@@ -156,12 +156,12 @@ export function BeginnerMarket({
         <div>
           <p className="eyebrow">BEGINNER QUOTE BOARD</p>
           <h1>股票行情</h1>
-          <p>涨跌优先，现价与 K 线作为辅助。选择左侧股票，或输入代码查询。</p>
+          <p>涨跌优先，现价与 K 线作为辅助。选择左侧股票，或输入公司名称、股票代码查询。</p>
         </div>
         <div>
           <form className="stock-search" onSubmit={search}>
-            <label className="sr-only" htmlFor="stock-symbol">股票代码</label>
-            <input id="stock-symbol" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="例如 NVDA、0700.HK、300308" />
+            <label className="sr-only" htmlFor="stock-symbol">公司名称或股票代码</label>
+            <input id="stock-symbol" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="例如 英伟达、腾讯、NVDA、0700.HK" />
             <button disabled={searching}>{searching ? "查询中" : "查价格"}</button>
           </form>
           {searchError && <small className="search-error">{searchError}</small>}
