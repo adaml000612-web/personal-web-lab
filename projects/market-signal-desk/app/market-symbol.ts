@@ -23,6 +23,7 @@ const knownCompanies: readonly KnownCompany[] = [
   { id: "search-usrklb", query: "usRKLB", symbol: "RKLB", name: "Rocket Lab", market: "美股", type: "stock", currency: "USD", aliases: ["Rocket Lab", "火箭实验室"] },
   { id: "search-usmeta", query: "usMETA", symbol: "META", name: "Meta", market: "美股", type: "stock", currency: "USD", aliases: ["Meta", "Meta Platforms", "Facebook", "脸书"] },
   { id: "search-usbaba", query: "usBABA", symbol: "BABA", name: "阿里巴巴", market: "美股", type: "stock", currency: "USD", aliases: ["阿里", "阿里巴巴", "Alibaba"] },
+  { id: "search-sh688825", query: "sh688825", symbol: "688825.SS", name: "长鑫科技", market: "A股", type: "stock", currency: "CNY", aliases: ["长鑫", "长鑫科技", "长鑫存储", "长鑫存储技术", "CXMT"] },
 ];
 
 function normalizeCompanyName(value: string) {

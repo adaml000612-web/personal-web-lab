@@ -121,9 +121,10 @@ export function BeginnerMarket({
       const response = await fetch(`/api/market?symbols=${encodeURIComponent(query)}`, { cache: "no-store" });
       const data = await response.json();
       if (!response.ok || !data.items?.length) throw new Error(data.error || "没有找到这只股票");
-      setSearched((current) => [...data.items, ...current]);
+      setSearched(data.items);
       setSelectedId(data.items[0].id);
     } catch (error) {
+      setSearched([]);
       setSearchError(error instanceof Error ? error.message : "查询失败，请检查公司名称或股票代码");
     } finally {
       setSearching(false);
@@ -164,6 +165,17 @@ export function BeginnerMarket({
             <input id="stock-symbol" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="例如 英伟达、腾讯、NVDA、0700.HK" />
             <button disabled={searching}>{searching ? "查询中" : "查价格"}</button>
           </form>
+          {searched.length > 0 && (
+            <div className="stock-search-results" aria-label="公司搜索结果">
+              <span>找到 {searched.length} 个结果</span>
+              {searched.map((quote) => (
+                <button type="button" className={selected?.id === quote.id ? "is-active" : ""} onClick={() => setSelectedId(quote.id)} key={quote.id}>
+                  <strong>{quote.name}</strong>
+                  <small>{quote.symbol} · {quote.market}</small>
+                </button>
+              ))}
+            </div>
+          )}
           {searchError && <small className="search-error">{searchError}</small>}
         </div>
       </header>

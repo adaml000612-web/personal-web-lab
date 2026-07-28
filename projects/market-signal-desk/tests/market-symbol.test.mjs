@@ -11,8 +11,8 @@ test("normalizes beginner-friendly US, Hong Kong and A-share symbols", () => {
 
 test("resolves Chinese, English and spaced company names", () => {
   assert.deepEqual(
-    ["英伟达", "NVIDIA Corporation", "腾讯控股", "Google", "中际旭创", "Advanced Micro Devices"].map((value) => parseStockSymbol(value)?.query),
-    ["usNVDA", "usNVDA", "hk00700", "usGOOGL", "sz300308", "usAMD"],
+    ["英伟达", "NVIDIA Corporation", "腾讯控股", "Google", "中际旭创", "Advanced Micro Devices", "长鑫存储"].map((value) => parseStockSymbol(value)?.query),
+    ["usNVDA", "usNVDA", "hk00700", "usGOOGL", "sz300308", "usAMD", "sh688825"],
   );
   assert.deepEqual(
     parseStockSymbols("特斯拉，阿里巴巴").map(({ query }) => query),

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { instruments } from "../../market-config";
+import { searchCompanyInstruments } from "../../market-search";
 import { parseStockSymbols } from "../../market-symbol";
 
 export const dynamic = "force-dynamic";
@@ -16,10 +17,13 @@ function timestamp(value: string) {
 
 export async function GET(request: Request) {
   const symbols = new URL(request.url).searchParams.get("symbols");
-  const selectedInstruments = symbols ? parseStockSymbols(symbols) : [...instruments];
+  let selectedInstruments = symbols ? parseStockSymbols(symbols) : [...instruments];
+  if (symbols && selectedInstruments.length === 0) {
+    selectedInstruments = await searchCompanyInstruments(symbols);
+  }
   if (symbols && selectedInstruments.length === 0) {
     return NextResponse.json(
-      { items: [], unavailable: [], error: "请输入公司名称，或美股、港股、A 股代码" },
+      { items: [], unavailable: [], error: "没有找到对应股票，请尝试公司简称、完整名称或股票代码" },
       { status: 400 },
     );
   }
