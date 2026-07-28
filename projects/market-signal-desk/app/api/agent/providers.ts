@@ -11,7 +11,7 @@ const instructions = `你是“问前哨”，面向投资新手和普通家庭�
 使用通俗简体中文，控制在 350 字以内。不要编造价格、新闻、持仓或来源。`;
 
 const chatEndpoints: Partial<Record<CustomModelProvider, string>> = {
-  deepseek: "https://api.deepseek.com/v1/chat/completions",
+  deepseek: "https://api.deepseek.com/chat/completions",
   zai: "https://api.z.ai/api/paas/v4/chat/completions",
   xai: "https://api.x.ai/v1/chat/completions",
   qwen: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
@@ -166,6 +166,9 @@ async function callChatCompatible(request: ProviderRequest) {
       ],
       max_tokens: 900,
       stream: false,
+      ...(request.provider === "deepseek"
+        ? { thinking: { type: "enabled" }, reasoning_effort: "high" }
+        : {}),
     }),
   });
   return chatCompletionText(data);

@@ -2,6 +2,7 @@
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
 import { withSecurityHeaders } from "./security";
+import { recordMetric } from "../server/admin-store";
 
 interface Env {
   ASSETS: Fetcher;
@@ -42,8 +43,35 @@ const worker = {
       return withSecurityHeaders(response, request);
     }
 
-    return withSecurityHeaders(await handler.fetch(request, env, ctx), request);
+    const startedAt = Date.now();
+    try {
+      const response = withSecurityHeaders(await handler.fetch(request, env, ctx), request);
+      if (shouldMonitor(url.pathname)) {
+        ctx.waitUntil(recordMetric({
+          route: url.pathname,
+          status: response.status,
+          durationMs: Date.now() - startedAt,
+        }));
+      }
+      return response;
+    } catch (error) {
+      if (shouldMonitor(url.pathname)) {
+        ctx.waitUntil(recordMetric({
+          route: url.pathname,
+          status: 500,
+          durationMs: Date.now() - startedAt,
+          message: error instanceof Error ? error.name : "Unhandled error",
+        }));
+      }
+      throw error;
+    }
   },
 };
+
+function shouldMonitor(pathname: string) {
+  return !pathname.startsWith("/_")
+    && !pathname.startsWith("/favicon")
+    && !/\.(?:css|js|map|png|jpg|jpeg|webp|svg|ico|woff2?)$/i.test(pathname);
+}
 
 export default worker;
