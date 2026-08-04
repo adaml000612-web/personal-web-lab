@@ -8,54 +8,66 @@ function clip(text: string, fallback: string) {
   return tidy.length > 72 ? `${tidy.slice(0, 72)}…` : tidy;
 }
 
-function diagnose(learning: string, thought: string) {
-  const combined = `${learning} ${thought}`.trim();
+function diagnose(goal: string, action: string, blocker: string, evidence: string) {
+  const combined = `${goal} ${action} ${blocker} ${evidence}`.trim();
 
-  if (combined.length < 24) {
+  if (combined.length < 48) {
     return {
-      issue: "你写下的是一个方向，但还不是可分析的问题。",
-      blindSpot: "现在缺少具体情境：你做了什么、哪里没达到预期、你原本以为会怎样。没有这些，任何建议都只能停在鼓励层面。",
-      next: "补一件真实小事：今天你想做什么、实际做到了哪一步、卡住时脑子里在想什么。",
+      issue: "信息还不够，暂时不能对你的问题下判断。",
+      blindSpot: "你写的是感受或方向，但少了可核对的事实：动作、卡点和结果。",
+      next: "先补全四格，尤其写清“我实际做了什么”和“做到什么算完成”。",
     };
   }
 
-  if (/不知道|迷茫|方向|怎么开始|从哪/.test(combined)) {
+  if (action.trim().length < 16) {
     return {
-      issue: "你当前的问题不是“没有方向”，而是目标太大，第一步没有被缩小。",
-      blindSpot: "当“学会做工具”这种目标没有边界时，你会不断寻找更好的方向，却没有得到能让自己安心的实际反馈。",
-      next: "只选一个 20 分钟能完成的动作：写一个页面标题、列出三个输入项，或让 Codex 做出一个按钮。",
+      issue: "你的目标已经有了，但行动没有落到一个真实步骤上。",
+      blindSpot: "你可能把“想清楚怎么做”当成了开始；可没有动作，就不会有能纠正方向的反馈。",
+      next: "把明天的动作写成一个动词开头的句子：例如“写出四个输入问题，并用自己的一天填一遍”。",
     };
   }
 
-  if (/看了|学了|了解|学习/.test(learning) && !/做了|写了|试了|完成|练习/.test(learning)) {
+  if (blocker.trim().length < 18) {
     return {
-      issue: "你今天主要在接收信息，还没有把它变成自己的能力。",
-      blindSpot: "“我理解了”很容易让人感觉在进步，但没有亲手尝试时，明天往往又要从头想起。",
-      next: "把今天的一点内容转成一个产出：一条自己的解释、一个小页面，或一次真实操作。",
+      issue: "你知道自己不顺，但还没定位到具体卡点。",
+      blindSpot: "“有点难”不能指导下一步；要分清是不会、没时间、怕做错，还是不知道如何判断好坏。",
+      next: "把卡点补成一句完整事实：“当我尝试___时，因为___，所以停在___。”",
+    };
+  }
+
+  if (evidence.trim().length < 14) {
+    return {
+      issue: "你做了事，但没有设完成标准，所以很难感到自己真的前进。",
+      blindSpot: "没有证据时，大脑会默认“还不够好”，然后把下一步又扩大成一个模糊目标。",
+      next: "给明天留一个可检查的结果：一段文字、一个页面、一张截图，或一条能自己解释的结论。",
     };
   }
 
   if (/别人|焦虑|跟不上|落后/.test(combined)) {
     return {
-      issue: "比较正在替代行动，消耗了你本来可以用于试一次的注意力。",
-      blindSpot: "你看到的是别人的成品，却拿它和自己正在学习的过程相比；这会让每一步都显得不够。",
-      next: "今天只记录一个可见证据：你亲手做了什么、学会了什么、下一次能比昨天少问什么。",
+      issue: "你现在被比较感牵着走，它遮住了你已经拥有的具体进展。",
+      blindSpot: "别人的成品不能用来衡量你今天是否完成了自己的小实验。",
+      next: "明天先完成你写下的验收证据，再决定是否要看别人的案例。",
     };
   }
 
   return {
-    issue: "你已经发现了一个真实问题，但还没有把“解决了”定义清楚。",
-    blindSpot: "如果没有完成标准，之后每一次修改都会像在原地打转，因为你无法判断这次是不是已经足够。",
-    next: "用一句话定义完成：明天我能做出／验证什么，才算这件事向前推进了？",
+    issue: "你已经把问题说具体了：现在真正需要的不是更多建议，而是完成一次小验证。",
+    blindSpot: "不要急着把今天的卡点变成长期能力焦虑；它首先只是一个可以被下一次尝试回答的问题。",
+    next: `明天优先完成：${clip(evidence, "你写下的验收证据")}。做完后再判断下一步，而不是提前扩大任务。`,
   };
 }
 
 export default function Home() {
-  const [learning, setLearning] = useState("");
-  const [thought, setThought] = useState("");
+  const [goal, setGoal] = useState("");
+  const [action, setAction] = useState("");
+  const [blocker, setBlocker] = useState("");
+  const [evidence, setEvidence] = useState("");
   const [reflection, setReflection] = useState<null | {
-    learning: string;
-    thought: string;
+    goal: string;
+    action: string;
+    blocker: string;
+    evidence: string;
     issue: string;
     blindSpot: string;
     next: string;
@@ -73,10 +85,12 @@ export default function Home() {
 
   function createReflection(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const diagnosis = diagnose(learning, thought);
+    const diagnosis = diagnose(goal, action, blocker, evidence);
     setReflection({
-      learning: clip(learning, "今天还没有记录学习内容。"),
-      thought: clip(thought, "今天还没有写下困惑或想法。"),
+      goal: clip(goal, "还没有写下今天原本想推进的事。"),
+      action: clip(action, "还没有记录实际做过的动作。"),
+      blocker: clip(blocker, "还没有写下具体卡点。"),
+      evidence: clip(evidence, "还没有写下明天的验收证据。"),
       ...diagnosis,
     });
   }
@@ -86,41 +100,63 @@ export default function Home() {
       <header className="masthead">
         <div>
           <p className="eyebrow">今天的学习收据</p>
-          <h1>把零散的念头，<br />变成明天的方向。</h1>
+          <h1>别急着总结。<br />先把事实说清楚。</h1>
         </div>
         <p className="date-stamp">{today}</p>
       </header>
 
       <section className="intro" aria-label="使用说明">
         <span className="step">01</span>
-        <p>不需要写得完整。留下今天真正学到的事，和一个还没想明白的念头。</p>
+        <p>这不是日记。按顺序回答四个问题，才有材料看清你真正卡在哪里。</p>
       </section>
 
       <form className="reflection-form" onSubmit={createReflection}>
-        <label className="entry-card entry-learning">
-          <span className="entry-number">A</span>
-          <span className="label-text">我今天学到／解决了什么？</span>
+        <label className="entry-card entry-goal">
+          <span className="entry-number">1</span>
+          <span className="label-text">我原本想推进什么？</span>
           <textarea
-            value={learning}
-            onChange={(event) => setLearning(event.target.value)}
-            placeholder="例如：我明白了网页项目要先写清第一版只做什么。"
-            rows={5}
+            value={goal}
+            onChange={(event) => setGoal(event.target.value)}
+            placeholder="例如：做出能指出我问题的每日复盘网页。"
+            rows={4}
           />
         </label>
 
-        <label className="entry-card entry-thought">
-          <span className="entry-number">B</span>
-          <span className="label-text">我还在想什么，或卡在哪里？</span>
+        <label className="entry-card entry-action">
+          <span className="entry-number">2</span>
+          <span className="label-text">我实际做了什么？</span>
           <textarea
-            value={thought}
-            onChange={(event) => setThought(event.target.value)}
-            placeholder="例如：我不知道第一个小工具该从哪里开始做。"
-            rows={5}
+            value={action}
+            onChange={(event) => setAction(event.target.value)}
+            placeholder="例如：我写了第一版页面，并试着让它分析两段输入。"
+            rows={4}
+          />
+        </label>
+
+        <label className="entry-card entry-blocker">
+          <span className="entry-number">3</span>
+          <span className="label-text">我卡在什么具体瞬间？试过什么？</span>
+          <textarea
+            value={blocker}
+            onChange={(event) => setBlocker(event.target.value)}
+            placeholder="例如：分析结果很泛；我试过多写一点，但问题仍然不够具体。"
+            rows={4}
+          />
+        </label>
+
+        <label className="entry-card entry-evidence">
+          <span className="entry-number">4</span>
+          <span className="label-text">明天留下什么，才算真的推进？</span>
+          <textarea
+            value={evidence}
+            onChange={(event) => setEvidence(event.target.value)}
+            placeholder="例如：用自己的真实记录填完四格，并得到一条可执行的明日动作。"
+            rows={4}
           />
         </label>
 
         <button type="submit" className="generate-button">
-          生成今日复盘 <span aria-hidden="true">→</span>
+          看清我的问题 <span aria-hidden="true">→</span>
         </button>
       </form>
 
@@ -133,8 +169,10 @@ export default function Home() {
           <div className="receipt-grid">
             <article className="evidence-card">
               <h2>你写下的事实</h2>
-              <p>{reflection.learning}</p>
-              <p className="thought-line">{reflection.thought}</p>
+              <p><strong>目标：</strong>{reflection.goal}</p>
+              <p className="thought-line"><strong>行动：</strong>{reflection.action}</p>
+              <p className="thought-line"><strong>卡点：</strong>{reflection.blocker}</p>
+              <p className="thought-line"><strong>证据：</strong>{reflection.evidence}</p>
             </article>
             <article className="issue-card">
               <h2>我看到的当前症结</h2>
@@ -149,7 +187,7 @@ export default function Home() {
           </div>
         </section>
       ) : (
-        <p className="quiet-note">写完两块内容后，复盘会出现在这里。</p>
+        <p className="quiet-note">写完四格后，这里会告诉你：问题到底出在哪，以及明天先做什么。</p>
       )}
     </main>
   );
