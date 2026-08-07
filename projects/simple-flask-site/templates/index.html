@@ -39,13 +39,27 @@
       h1 { margin: 22px 0 12px; font-size: clamp(42px, 8vw, 72px); letter-spacing: -.05em; }
       p { margin: 0; color: #cbd5e1; font-size: 20px; line-height: 1.6; }
       strong { color: #93c5fd; }
+      form { margin-top: 28px; }
+      button {
+        padding: 11px 22px;
+        color: #e2e8f0;
+        background: transparent;
+        border: 1px solid rgba(148, 163, 184, .45);
+        border-radius: 999px;
+        cursor: pointer;
+        font: inherit;
+      }
+      button:hover { background: rgba(148, 163, 184, .12); }
     </style>
   </head>
   <body>
     <main>
       <span class="badge">Flask is running</span>
       <h1>Hello, World!</h1>
-      <p>这是一个运行在 <strong>localhost</strong> 的简单 Flask 网站。</p>
+      <p>欢迎你，<strong>{{ session.username }}</strong>。这是一个运行在 <strong>localhost</strong> 的简单 Flask 网站。</p>
+      <form method="post" action="{{ url_for('logout') }}">
+        <button type="submit">退出登录</button>
+      </form>
     </main>
   </body>
 </html>
