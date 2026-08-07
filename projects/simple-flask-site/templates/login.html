@@ -42,6 +42,7 @@
         outline: none;
       }
       input:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(59,130,246,.18); }
+      input:focus-visible, button:focus-visible { outline: 3px solid #bfdbfe; outline-offset: 3px; }
       button {
         width: 100%;
         margin-top: 24px;
@@ -61,6 +62,14 @@
         background: rgba(127, 29, 29, .28);
         border: 1px solid rgba(248, 113, 113, .35);
         border-radius: 10px;
+      }
+      @media (max-width: 520px) {
+        body { align-items: start; padding-top: 9vh; }
+        main { width: calc(100% - 28px); padding: 32px 22px; border-radius: 22px; }
+        h1 { font-size: 36px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { transition: none !important; }
       }
     </style>
   </head>

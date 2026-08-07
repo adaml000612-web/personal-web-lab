@@ -13,6 +13,7 @@
         --muted: #94a3b8;
       }
       * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
       body {
         min-height: 100vh;
         margin: 0;
@@ -23,6 +24,10 @@
           #09090b;
       }
       a { color: inherit; text-decoration: none; }
+      a:focus-visible, button:focus-visible, input:focus-visible {
+        outline: 3px solid #bfdbfe;
+        outline-offset: 3px;
+      }
       .nav {
         position: sticky;
         top: 0;
@@ -121,6 +126,22 @@
         .nav-links > a { display: none; }
         h1 { font-size: clamp(48px, 15vw, 72px); }
         main { padding-top: 36px; }
+      }
+      @media (max-width: 520px) {
+        .nav, main { width: min(100% - 28px, 1120px); }
+        .nav { padding: 16px 0; }
+        .brand-mark { width: 31px; height: 31px; }
+        .logout button { padding: 8px 12px; }
+        main { min-height: auto; padding: 48px 0 72px; }
+        .hero { gap: 30px; }
+        h1 { font-size: clamp(44px, 14vw, 62px); }
+        .lead { margin-top: 20px; font-size: 17px; }
+        .card { padding: 25px 20px; border-radius: 21px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        *, *::before, *::after { transition: none !important; }
+        button:hover { transform: none; }
       }
     </style>
   </head>
