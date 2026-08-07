@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ code }} · Flask Studio</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      * { box-sizing: border-box; }
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        color: #f8fafc;
+        background:
+          radial-gradient(circle at 18% 20%, rgba(37, 99, 235, .55), transparent 32%),
+          radial-gradient(circle at 82% 76%, rgba(124, 58, 237, .5), transparent 30%),
+          #09090b;
+      }
+      main {
+        width: min(620px, 100%);
+        padding: clamp(30px, 7vw, 58px);
+        text-align: center;
+        border: 1px solid rgba(255,255,255,.16);
+        border-radius: 28px;
+        background: rgba(15, 23, 42, .8);
+        box-shadow: 0 30px 80px rgba(0,0,0,.4);
+      }
+      .code { margin: 0; color: #93c5fd; font-size: 16px; font-weight: 800; letter-spacing: .16em; }
+      h1 { margin: 14px 0 12px; font-size: clamp(38px, 8vw, 62px); letter-spacing: -.05em; }
+      .message { margin: 0 auto; max-width: 480px; color: #cbd5e1; font-size: 18px; line-height: 1.7; }
+      a {
+        display: inline-block;
+        margin-top: 28px;
+        padding: 13px 22px;
+        color: white;
+        text-decoration: none;
+        font-weight: 750;
+        border-radius: 13px;
+        background: linear-gradient(135deg, #2563eb, #7c3aed);
+      }
+      a:focus-visible { outline: 3px solid #bfdbfe; outline-offset: 4px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="code">ERROR {{ code }}</p>
+      <h1>{{ title }}</h1>
+      <p class="message">{{ message }}</p>
+      <a href="{{ url_for('home') }}">返回首页</a>
+    </main>
+  </body>
+</html>
