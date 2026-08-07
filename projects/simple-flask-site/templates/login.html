@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>登录 · Flask Hello</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+      * { box-sizing: border-box; }
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        color: #f8fafc;
+        background:
+          radial-gradient(circle at 20% 20%, #2563eb 0, transparent 32%),
+          radial-gradient(circle at 80% 75%, #7c3aed 0, transparent 30%),
+          #09090b;
+      }
+      main {
+        width: min(460px, calc(100% - 40px));
+        padding: 46px;
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 28px;
+        background: rgba(15, 23, 42, .78);
+        box-shadow: 0 30px 80px rgba(0,0,0,.4);
+        backdrop-filter: blur(18px);
+      }
+      .badge { color: #93c5fd; font-weight: 700; }
+      h1 { margin: 12px 0 8px; font-size: 42px; letter-spacing: -.04em; }
+      .subtitle { margin: 0 0 28px; color: #94a3b8; line-height: 1.6; }
+      label { display: block; margin: 18px 0 8px; color: #cbd5e1; }
+      input {
+        width: 100%;
+        padding: 14px 16px;
+        color: #f8fafc;
+        background: rgba(2, 6, 23, .62);
+        border: 1px solid rgba(148, 163, 184, .35);
+        border-radius: 12px;
+        font: inherit;
+        outline: none;
+      }
+      input:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(59,130,246,.18); }
+      button {
+        width: 100%;
+        margin-top: 24px;
+        padding: 14px;
+        color: white;
+        background: linear-gradient(135deg, #2563eb, #7c3aed);
+        border: 0;
+        border-radius: 12px;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 700;
+      }
+      .error {
+        margin: 18px 0 0;
+        padding: 12px 14px;
+        color: #fecaca;
+        background: rgba(127, 29, 29, .28);
+        border: 1px solid rgba(248, 113, 113, .35);
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="badge">Flask Hello</span>
+      <h1>欢迎回来</h1>
+      <p class="subtitle">请输入用户名和密码以继续访问网站。</p>
+      <form method="post" action="{{ url_for('login') }}">
+        <label for="username">用户名</label>
+        <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+        <label for="password">密码</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button type="submit">登录</button>
+      </form>
+      {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+    </main>
+  </body>
+</html>
