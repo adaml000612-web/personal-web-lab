@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Flask Hello</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+      * { box-sizing: border-box; }
+      body {
+        min-height: 100vh;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        color: #f8fafc;
+        background:
+          radial-gradient(circle at 20% 20%, #2563eb 0, transparent 32%),
+          radial-gradient(circle at 80% 75%, #7c3aed 0, transparent 30%),
+          #09090b;
+      }
+      main {
+        width: min(680px, calc(100% - 40px));
+        padding: 56px;
+        text-align: center;
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 28px;
+        background: rgba(15, 23, 42, .72);
+        box-shadow: 0 30px 80px rgba(0,0,0,.4);
+        backdrop-filter: blur(18px);
+      }
+      .badge {
+        display: inline-block;
+        padding: 8px 14px;
+        border-radius: 999px;
+        color: #bfdbfe;
+        background: rgba(37,99,235,.2);
+        border: 1px solid rgba(96,165,250,.4);
+      }
+      h1 { margin: 22px 0 12px; font-size: clamp(42px, 8vw, 72px); letter-spacing: -.05em; }
+      p { margin: 0; color: #cbd5e1; font-size: 20px; line-height: 1.6; }
+      strong { color: #93c5fd; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="badge">Flask is running</span>
+      <h1>Hello, World!</h1>
+      <p>这是一个运行在 <strong>localhost</strong> 的简单 Flask 网站。</p>
+    </main>
+  </body>
+</html>
