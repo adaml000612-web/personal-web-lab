@@ -3,6 +3,7 @@ let activeLessonId = null;
 let activeStep = 0;
 let selectedOptionId = null;
 let answerChecked = false;
+let lastDialogFocus = null;
 
 function defaultProgress() { return { completedLevels: [], answers: {}, currentLesson: null }; }
 function loadProgress() {
@@ -14,26 +15,52 @@ function loadProgress() {
 function saveProgress(progress) { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }
 function isUnlocked(index, progress) { return index === 0 || progress.completedLevels.includes(LEVELS[index - 1].id); }
 function currentLesson() { return LESSONS[activeLessonId]; }
+function availableLevels() { return LEVELS.filter(level => level.available); }
+
+function suggestedLessonId() {
+  const progress = loadProgress();
+  if (progress.currentLesson?.lessonId && LESSONS[progress.currentLesson.lessonId] && !progress.completedLevels.includes(progress.currentLesson.lessonId)) return progress.currentLesson.lessonId;
+  const nextLevel = availableLevels().find(level => !progress.completedLevels.includes(level.id));
+  return nextLevel?.id || null;
+}
+
+function updatePrimaryActions() {
+  const progress = loadProgress();
+  const suggestion = suggestedLessonId();
+  const hasCurrentLesson = progress.currentLesson?.lessonId === suggestion;
+  document.querySelectorAll('[data-primary-start]').forEach(button => {
+    if (suggestion) {
+      button.dataset.startLevel = suggestion;
+      button.textContent = hasCurrentLesson ? '继续上次学习' : progress.completedLevels.length ? '继续下一关' : '🎯 开始第一关';
+    } else {
+      delete button.dataset.startLevel;
+      button.textContent = '查看学习成果';
+    }
+  });
+}
 
 function renderLevels() {
   const grid = document.querySelector('[data-level-grid]');
   const progress = loadProgress();
-  grid.innerHTML = LEVELS.map((level, index) => {
+  const visibleLevels = availableLevels();
+  grid.innerHTML = visibleLevels.map((level, index) => {
     const completed = progress.completedLevels.includes(level.id);
     const unlocked = isUnlocked(index, progress);
     const inProgress = progress.currentLesson?.lessonId === level.id && !completed;
     const state = completed ? '已完成' : inProgress ? '进行中' : unlocked ? '可开始' : '未解锁';
-    const action = completed ? '重新训练 →' : inProgress ? '继续学习 →' : !unlocked ? '🔒 完成上一关后解锁' : level.available ? '进入关卡 →' : '已解锁 · 即将开放';
+    const action = completed ? '重新训练 →' : inProgress ? '继续学习 →' : !unlocked ? '🔒 完成上一关后解锁' : '进入关卡 →';
     return `<article class="level-card fade-in ${unlocked ? '' : 'locked'}" style="animation-delay:${index * 0.1}s">
       <div class="level-topline"><span class="level-number">关卡 ${index + 1}</span><span class="level-state">${state}</span></div>
       <span class="card-icon" aria-hidden="true">${level.icon}</span><h3>${level.title}</h3><p>${level.description}</p>
       <div class="level-meta"><span>约 ${level.minutes} 分钟</span><span>${level.questions} 道训练题</span></div>
-      ${unlocked && level.available ? `<button class="btn-text level-action" type="button" data-start-level="${level.id}">${action}</button>` : `<span class="level-action">${action}</span>`}
+      ${unlocked ? `<button class="btn-text level-action" type="button" data-start-level="${level.id}">${action}</button>` : `<span class="level-action">${action}</span>`}
     </article>`;
   }).join('');
-  const count = progress.completedLevels.length;
-  document.querySelector('[data-progress-number]').textContent = `${count}/${LEVELS.length}`;
-  document.querySelector('[data-progress-bar]').style.width = `${count / LEVELS.length * 100}%`;
+  const count = visibleLevels.filter(level => progress.completedLevels.includes(level.id)).length;
+  document.querySelector('[data-progress-number]').textContent = `${count}/${visibleLevels.length}`;
+  document.querySelector('[data-progress-bar]').style.width = `${count / visibleLevels.length * 100}%`;
+  document.querySelector('[data-path-complete]').hidden = count !== visibleLevels.length;
+  updatePrimaryActions();
 }
 
 function standardStep(step) {
@@ -61,7 +88,19 @@ const TRAINING_RENDERERS = {
 };
 
 function completeStep(step) {
-  return `<div class="completion"><p class="eyebrow">${step.eyebrow}</p><span class="lesson-icon" aria-hidden="true">${step.icon}</span><h2 id="lesson-title">${step.title}</h2><ul>${step.summary.map(item => `<li><span aria-hidden="true">✓</span>${item}</li>`).join('')}</ul><div class="callout"><strong>学习进度已保存</strong><p>${step.nextMessage}</p></div><div class="lesson-actions"><button class="btn-primary" type="button" data-complete-level>完成并返回地图</button></div></div>`;
+  return `<div class="completion"><p class="eyebrow">${step.eyebrow}</p><span class="lesson-icon" aria-hidden="true">${step.icon}</span><h2 id="lesson-title">${step.title}</h2><div class="achievement-card"><strong>你已经学会</strong><p>${step.achievement}</p></div><ul>${step.summary.map(item => `<li><span aria-hidden="true">✓</span>${item}</li>`).join('')}</ul><div class="callout"><strong>学习进度已保存</strong><p>${step.nextMessage}</p></div><div class="lesson-actions"><button class="btn-primary" type="button" data-complete-level>完成并返回地图</button></div></div>`;
+}
+
+function openResetDialog() {
+  const dialog = document.querySelector('[data-reset-dialog]');
+  lastDialogFocus = document.activeElement;
+  dialog.hidden = false;
+  document.querySelector('.dialog-actions [data-cancel-reset]').focus();
+}
+
+function closeResetDialog() {
+  document.querySelector('[data-reset-dialog]').hidden = true;
+  if (lastDialogFocus) lastDialogFocus.focus();
 }
 
 function saveCurrentStep() {
@@ -130,9 +169,10 @@ function setupInteractions() {
     if (event.target.closest('[data-check-answer]') && selectedOptionId) { answerChecked = true; renderLessonStep(); }
     if (event.target.closest('[data-retry-answer]')) { selectedOptionId = null; answerChecked = false; renderLessonStep(); }
     if (event.target.closest('[data-complete-level]')) finishLesson();
-    if (event.target.closest('[data-reset-progress]')) document.querySelector('[data-reset-dialog]').hidden = false;
-    if (event.target.closest('[data-cancel-reset]')) document.querySelector('[data-reset-dialog]').hidden = true;
-    if (event.target.closest('[data-confirm-reset]')) { localStorage.removeItem(STORAGE_KEY); document.querySelector('[data-reset-dialog]').hidden = true; activeLessonId = null; document.querySelector('[data-lesson-view]').hidden = true; document.body.classList.remove('lesson-open'); renderLevels(); document.querySelector('#path').scrollIntoView(); }
+    if (event.target.closest('[data-primary-start]') && !event.target.closest('[data-primary-start]').dataset.startLevel) document.querySelector('#path').scrollIntoView();
+    if (event.target.closest('[data-reset-progress]')) openResetDialog();
+    if (event.target.closest('[data-cancel-reset]')) closeResetDialog();
+    if (event.target.closest('[data-confirm-reset]')) { localStorage.removeItem(STORAGE_KEY); closeResetDialog(); activeLessonId = null; document.querySelector('[data-lesson-view]').hidden = true; document.body.classList.remove('lesson-open'); renderLevels(); document.querySelector('#path').scrollIntoView(); }
   });
   document.addEventListener('change', event => {
     if (event.target.name === 'lesson-answer') { selectedOptionId = event.target.value; renderLessonStep(); }
@@ -146,5 +186,22 @@ function setupNavigation() {
   links.addEventListener('click', () => { links.classList.remove('open'); button.setAttribute('aria-expanded', 'false'); });
 }
 
-renderLevels(); setupNavigation(); setupInteractions();
+function setupKeyboardInteractions() {
+  document.addEventListener('keydown', event => {
+    const dialog = document.querySelector('[data-reset-dialog]');
+    const menuButton = document.querySelector('[data-menu-button]');
+    const menu = document.querySelector('[data-nav-links]');
+    if (event.key === 'Escape' && !dialog.hidden) { closeResetDialog(); return; }
+    if (event.key === 'Escape' && menu.classList.contains('open')) { menu.classList.remove('open'); menuButton.setAttribute('aria-expanded', 'false'); menuButton.focus(); return; }
+    if (event.key === 'Escape' && !document.querySelector('[data-lesson-view]').hidden) { closeLesson(); return; }
+    if (event.key === 'Tab' && !dialog.hidden) {
+      const focusable = [...dialog.querySelectorAll('button:not([disabled])')];
+      const first = focusable[0]; const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+  });
+}
+
+renderLevels(); setupNavigation(); setupInteractions(); setupKeyboardInteractions();
 

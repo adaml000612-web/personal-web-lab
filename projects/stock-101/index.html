@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="面向股票新手的关卡式学习和模拟训练工具。">
+  <meta name="description" content="面向股票新手的关卡式互动学习工具。">
   <title>Stock 101｜股票新手训练营</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +18,7 @@
       <a class="brand" href="#top"><span aria-hidden="true">🌱</span> Stock 101</a>
       <button class="menu-button" type="button" aria-expanded="false" aria-controls="nav-links" data-menu-button><span class="sr-only">打开导航菜单</span><span aria-hidden="true">☰</span></button>
       <div class="nav-links" id="nav-links" data-nav-links>
-        <a href="#path">学习路径</a><a href="#training">模拟训练</a><a href="#principles">训练原则</a><button class="btn-text nav-reset" type="button" data-reset-progress>重置进度</button><a class="btn-primary nav-cta" href="#path">开始训练</a>
+        <a href="#path">学习路径</a><a href="#training">体验方式</a><a href="#principles">学习原则</a><button class="btn-text nav-reset" type="button" data-reset-progress>重置进度</button><button class="btn-primary nav-cta" type="button" data-primary-start>开始第一关</button>
       </div>
     </nav>
   </header>
@@ -31,16 +31,18 @@
           <path class="chart-area" d="M20 150 C80 142 92 108 142 116 C198 126 210 67 268 78 C310 86 326 40 342 28 L342 160 L20 160 Z"></path>
           <path class="chart-line" d="M20 150 C80 142 92 108 142 116 C198 126 210 67 268 78 C310 86 326 40 342 28"></path><circle class="chart-point" cx="342" cy="28" r="7"></circle>
         </svg>
-        <p class="eyebrow">股票新手学习与训练工具</p><h1>先学会判断，再开始行动</h1>
-        <p class="hero-copy">通过 6 个关卡、模拟 K 线和虚构市场训练，理解股票基础知识。没有荐股，没有预测，也不需要注册。</p>
-        <div class="hero-actions"><a class="btn-primary" href="#path">🎯 开始第一关</a><a class="btn-ghost" href="#training">📈 了解训练方式</a></div>
-        <p class="local-note">你的进度仅保存在当前浏览器中</p>
+        <p class="eyebrow">股票新手互动学习工具</p><h1>先理解股票，再谈投资</h1>
+        <p class="hero-copy">用约 20 分钟完成 3 个互动关卡，理解股票、价格和市值。没有荐股，没有预测，也不需要注册。</p>
+        <div class="hero-actions"><button class="btn-primary" type="button" data-primary-start>🎯 开始第一关</button><a class="btn-ghost" href="#training">了解学习方式</a></div>
+        <p class="local-note">进度仅保存在当前浏览器；换设备或清除浏览器数据后不会同步</p>
       </div>
     </section>
     <section class="section" id="path" aria-labelledby="path-title">
       <div class="container">
-        <div class="section-heading"><div><p class="eyebrow">学习路径</p><h2 id="path-title">六关建立股票基础</h2></div><div class="progress-summary" aria-live="polite"><span class="stat-number" data-progress-number>0/6</span><span class="stat-label">已完成关卡</span></div></div>
-        <div class="progress-track" aria-label="课程总进度"><span data-progress-bar></span></div><div class="level-grid" data-level-grid></div>
+        <div class="section-heading"><div><p class="eyebrow">当前测试版</p><h2 id="path-title">三关建立股票基础</h2></div><div class="progress-summary" aria-live="polite"><span class="stat-number" data-progress-number>0/3</span><span class="stat-label">已完成关卡</span></div></div>
+        <div class="progress-track" aria-label="当前测试版总进度"><span data-progress-bar></span></div>
+        <div class="path-complete" data-path-complete hidden aria-live="polite"><span class="card-icon" aria-hidden="true">🌱</span><div><h3>你已完成当前测试版</h3><p>你现在能够解释股票是什么、为什么价格会变化，以及为什么不能只用股价比较公司大小。</p></div></div>
+        <div class="level-grid" data-level-grid></div>
       </div>
     </section>
     <section class="lesson-view" data-lesson-view hidden aria-labelledby="lesson-title">
@@ -52,19 +54,19 @@
     </section>
     <div class="confirm-dialog" data-reset-dialog hidden>
       <div class="dialog-backdrop" data-cancel-reset></div>
-      <section class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+      <section class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="reset-title" aria-describedby="reset-description" tabindex="-1" data-reset-dialog-card>
         <p class="eyebrow">重新开始</p><h2 id="reset-title">确定重置学习进度吗？</h2>
-        <p>已完成关卡和答题记录将从当前浏览器中清除。</p>
+        <p id="reset-description">已完成关卡和答题记录将从当前浏览器中清除，此操作无法撤销。</p>
         <div class="dialog-actions"><button class="btn-ghost" type="button" data-cancel-reset>取消</button><button class="btn-primary" type="button" data-confirm-reset>确认重置</button></div>
       </section>
     </div>
     <section class="section training-section" id="training" aria-labelledby="training-title">
       <div class="container">
-        <div class="section-heading"><div><p class="eyebrow">学完马上练</p><h2 id="training-title">不是看课程，是完成训练</h2></div></div>
+        <div class="section-heading"><div><p class="eyebrow">当前体验</p><h2 id="training-title">每个知识点都要亲自判断</h2></div></div>
         <div class="training-grid">
-          <article class="feature-card fade-in"><span class="card-icon" aria-hidden="true">🕯️</span><h3>模拟 K 线</h3><p>使用本地固定数据，识别开盘、收盘、最高和最低价格，不连接真实行情。</p><span class="status-tag">第 5 天开发</span></article>
-          <article class="feature-card fade-in"><span class="card-icon" aria-hidden="true">🏦</span><h3>虚构市场</h3><p>在预设事件中观察价格变化，练习区分事实、市场预期和情绪。</p><span class="status-tag">第 7 天开发</span></article>
-          <article class="feature-card fade-in"><span class="card-icon" aria-hidden="true">💬</span><h3>即时反馈</h3><p>每次作答都解释正确原因或具体误区，帮助你知道下一步该复习什么。</p><span class="status-tag">第 4 天开发</span></article>
+          <article class="feature-card fade-in"><span class="card-icon" aria-hidden="true">🪜</span><h3>循序渐进</h3><p>一次只学习一个核心概念，完成当前关卡后再进入下一关。</p></article>
+          <article class="feature-card fade-in"><span class="card-icon" aria-hidden="true">💬</span><h3>即时反馈</h3><p>每次作答都解释正确原因或具体误区，而不只是显示分数。</p></article>
+          <article class="feature-card fade-in"><span class="card-icon" aria-hidden="true">🌱</span><h3>随时继续</h3><p>无需注册，退出后可以在当前浏览器中从上次步骤继续。</p></article>
         </div>
       </div>
     </section>
