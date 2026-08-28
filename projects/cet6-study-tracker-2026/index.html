@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#173b57" />
+    <meta name="description" content="2026 年 12 月 CET-6 手机每日打卡，离线可用，数据保存在本机。" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="六级打卡" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/app-icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>CET-6 425+ 每日打卡</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="brand" aria-label="CET-6 425+ 每日打卡">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" role="img">
+              <path d="M5 12.5 9.2 17 19 7" />
+            </svg>
+          </span>
+          <div>
+            <strong>六级打卡</strong>
+            <span id="app-status">自动保存 · 首次联网后可离线</span>
+          </div>
+        </div>
+        <button class="icon-button" id="settings-button" type="button" aria-label="打开设置">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"></path>
+          </svg>
+        </button>
+      </header>
+
+      <main id="main-content">
+        <section class="view is-active" id="today-view" data-view="today" aria-labelledby="today-heading">
+          <div class="context-banner" id="context-banner" hidden></div>
+
+          <div class="date-switcher" aria-label="切换计划日期">
+            <button class="date-arrow" id="previous-day" type="button" aria-label="前一天">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+            </button>
+            <button class="date-display" id="date-display" type="button" aria-label="选择日期">
+              <span id="date-kicker"></span>
+              <strong id="today-heading"></strong>
+            </button>
+            <button class="date-arrow" id="next-day" type="button" aria-label="后一天">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+            </button>
+          </div>
+
+          <button class="back-today" id="back-today" type="button" hidden>回到今天</button>
+
+          <div class="week-strip" id="week-strip" aria-label="本周计划"></div>
+
+          <article class="today-card">
+            <div class="day-meta">
+              <span class="chip" id="week-chip"></span>
+              <span class="chip chip-accent" id="day-type-chip"></span>
+              <span class="day-duration" id="day-duration"></span>
+            </div>
+
+            <div class="progress-copy">
+              <div>
+                <span id="progress-label">今日进度</span>
+                <strong id="progress-count">0/0 项</strong>
+              </div>
+              <span id="progress-minutes">0 / 0 分钟</span>
+            </div>
+            <div class="progress-track" role="progressbar" aria-label="今日任务完成进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <span id="progress-bar"></span>
+            </div>
+
+            <div class="task-list" id="task-list"></div>
+
+            <div class="empty-day" id="empty-day" hidden>
+              <span class="empty-symbol" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M5 12.5 9.2 17 19 7"></path></svg>
+              </span>
+              <h2 id="empty-title">今天没有学习任务</h2>
+              <p id="empty-copy"></p>
+            </div>
+
+            <div class="day-details" id="day-details">
+              <details>
+                <summary>资料与完成标准</summary>
+                <dl>
+                  <div>
+                    <dt>使用资料</dt>
+                    <dd id="day-material"></dd>
+                  </div>
+                  <div>
+                    <dt>完成标准</dt>
+                    <dd id="day-success"></dd>
+                  </div>
+                </dl>
+              </details>
+            </div>
+
+            <button class="primary-button" id="complete-day" type="button">一键完成今日</button>
+
+            <details class="optional-record" id="optional-record">
+              <summary>更多记录（选填）</summary>
+              <div class="field-grid">
+                <label>
+                  实际用时（分钟）
+                  <input id="actual-minutes" type="number" min="0" max="600" inputmode="numeric" placeholder="默认按已勾选任务估算" />
+                </label>
+                <label>
+                  一句话备注
+                  <textarea id="day-note" rows="3" maxlength="240" placeholder="例如：讲座听力仍容易走神"></textarea>
+                </label>
+              </div>
+              <button class="text-button danger-text" id="reset-day" type="button">重置当天记录</button>
+            </details>
+          </article>
+        </section>
+
+        <section class="view" id="calendar-view" data-view="calendar" aria-labelledby="calendar-heading" hidden>
+          <div class="section-heading">
+            <div>
+              <span>按日期查看</span>
+              <h1 id="calendar-heading">计划日历</h1>
+            </div>
+            <div class="month-controls">
+              <button class="icon-button compact" id="previous-month" type="button" aria-label="上个月">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg>
+              </button>
+              <strong id="calendar-month"></strong>
+              <button class="icon-button compact" id="next-month" type="button" aria-label="下个月">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="month-summary" id="month-summary"></div>
+          <div class="calendar-card">
+            <div class="weekday-row" aria-hidden="true">
+              <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+          </div>
+          <div class="calendar-legend" aria-label="日历状态说明">
+            <span><i class="status-dot complete"></i>完成</span>
+            <span><i class="status-dot partial"></i>部分</span>
+            <span><i class="status-dot pending"></i>未开始</span>
+            <span><i class="status-dot rest"></i>休息</span>
+          </div>
+        </section>
+
+        <section class="view" id="progress-view" data-view="progress" aria-labelledby="progress-heading" hidden>
+          <div class="section-heading">
+            <div>
+              <span>不追求完美，只看趋势</span>
+              <h1 id="progress-heading">学习进度</h1>
+            </div>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric-card metric-primary">
+              <span>完成学习日</span>
+              <strong id="completed-days">0</strong>
+              <small id="completed-days-total">共 0 天</small>
+            </article>
+            <article class="metric-card">
+              <span>已完成任务</span>
+              <strong id="completed-tasks">0</strong>
+              <small id="completed-tasks-total">共 0 项</small>
+            </article>
+            <article class="metric-card">
+              <span>预计投入</span>
+              <strong id="estimated-hours">0h</strong>
+              <small>按勾选任务估算</small>
+            </article>
+          </div>
+
+          <article class="progress-panel">
+            <div class="panel-heading">
+              <div>
+                <span>本周</span>
+                <h2 id="current-week-title">第 1 周</h2>
+              </div>
+              <strong id="current-week-rate">0%</strong>
+            </div>
+            <div class="progress-track large" role="progressbar" aria-label="本周完成率" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <span id="current-week-bar"></span>
+            </div>
+            <p id="current-week-copy"></p>
+          </article>
+
+          <article class="progress-panel">
+            <div class="panel-heading">
+              <div>
+                <span>任务分布</span>
+                <h2>各模块完成情况</h2>
+              </div>
+            </div>
+            <div class="module-progress" id="module-progress"></div>
+          </article>
+
+          <article class="progress-panel">
+            <div class="panel-heading">
+              <div>
+                <span>接下来</span>
+                <h2>下一次关键节点</h2>
+              </div>
+            </div>
+            <div class="milestone" id="next-milestone"></div>
+          </article>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="主要导航">
+        <button class="nav-button is-active" type="button" data-target="today" aria-current="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v14H4z"></path><path d="M8 3v5M16 3v5M4 10h16"></path><path d="m8 15 2 2 5-5"></path></svg>
+          <span>今天</span>
+        </button>
+        <button class="nav-button" type="button" data-target="calendar">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v14H4z"></path><path d="M8 3v5M16 3v5M4 10h16"></path></svg>
+          <span>日历</span>
+        </button>
+        <button class="nav-button" type="button" data-target="progress">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V9M12 19V5M19 19v-7"></path></svg>
+          <span>进度</span>
+        </button>
+      </nav>
+    </div>
+
+    <dialog class="settings-dialog" id="settings-dialog" aria-labelledby="settings-heading">
+      <form method="dialog" class="dialog-shell">
+        <header class="dialog-header">
+          <div>
+            <span>设备与数据</span>
+            <h2 id="settings-heading">设置</h2>
+          </div>
+          <button class="icon-button" value="close" aria-label="关闭设置">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+          </button>
+        </header>
+
+        <section class="settings-section install-section">
+          <span class="settings-kicker">放到手机桌面</span>
+          <h3>像 App 一样打开</h3>
+          <p id="install-copy">安装后可从主屏幕直接进入，首次联网后也能离线打卡。</p>
+          <button class="primary-button compact-button" id="install-button" type="button">安装到主屏幕</button>
+          <ol class="ios-install" id="ios-install" hidden>
+            <li>请用 Safari 打开本页</li>
+            <li>点底部“分享”按钮</li>
+            <li>选择“添加到主屏幕”</li>
+          </ol>
+        </section>
+
+        <section class="settings-section">
+          <span class="settings-kicker">隐私</span>
+          <h3>记录只保存在这台设备</h3>
+          <p>无需账号，也不会上传学习记录。清理浏览器数据或更换手机前，请先导出备份。</p>
+        </section>
+
+        <section class="settings-section">
+          <span class="settings-kicker">备份与恢复</span>
+          <h3>换手机也能继续</h3>
+          <div class="button-row">
+            <button class="secondary-button" id="export-button" type="button">导出备份</button>
+            <label class="secondary-button file-button" for="import-file">恢复备份</label>
+            <input id="import-file" type="file" accept="application/json,.json" hidden />
+          </div>
+          <small id="backup-status">还没有导出过备份</small>
+        </section>
+
+        <section class="settings-section danger-zone">
+          <span class="settings-kicker">重新开始</span>
+          <h3>清空全部打卡记录</h3>
+          <p>计划内容不会删除，但所有勾选、备注和实际用时会清空。</p>
+          <button class="secondary-button danger-button" id="reset-all" type="button">清空全部记录</button>
+        </section>
+
+        <footer class="dialog-footer">
+          <p>计划版本：cet6-2026-v1 · 12 月 12 日为待确认占位日期</p>
+        </footer>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true" hidden>
+      <span id="toast-message"></span>
+      <button id="toast-action" type="button" hidden>撤销</button>
+    </div>
+
+    <script src="./plan-data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

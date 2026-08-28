@@ -9,3 +9,4 @@
 - [SG26 新加坡旅行助手](projects/singapore-weeknd-plan-2026/)：新加坡三天两晚离线行程、购票清单与公共交通路线。
 - [今日学习收据](projects/daily-learning-receipt/)：把每天的学习、困惑和想法整理成带有问题分析与下一步行动的复盘网页。
 - [2026 年 12 月 CET-6 425+ 备考计划](projects/cet6-study-plan-2026/)：按 450 分能力倒排的 97 天 Excel/PDF 学习计划，包含每日任务、资料清单、模考与错题记录。
+- [CET-6 手机每日打卡](projects/cet6-study-tracker-2026/)：打开就是当天任务，逐项勾选后自动保存，支持日历统计、备份恢复、离线使用和添加到手机主屏幕。
