@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">六级打卡</title>
+  <desc id="description">深蓝色圆角方块中的学习清单与完成勾选</desc>
+  <rect width="512" height="512" rx="112" fill="#173b57" />
+  <path d="M162 82h188c43 0 78 35 78 78v224c0 25-21 46-46 46H130c-25 0-46-21-46-46V160c0-43 35-78 78-78Z" fill="#fff" />
+  <path d="M148 82h216c35 0 64 29 64 64v40H84v-40c0-35 29-64 64-64Z" fill="#f1a23c" />
+  <path d="M139 275l29 30 58-67" fill="none" stroke="#173b57" stroke-linecap="round" stroke-linejoin="round" stroke-width="26" />
+  <path d="M258 256h103M258 306h77M139 371h222" fill="none" stroke="#8fa4b2" stroke-linecap="round" stroke-width="22" />
+  <circle cx="146" cy="146" r="15" fill="#173b57" />
+  <circle cx="366" cy="146" r="15" fill="#173b57" />
+</svg>
