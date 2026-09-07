@@ -17,7 +17,7 @@ bug-fixing-agent/
 
 ## 准备环境
 
-需要 Python 3.11 或更高版本，以及已经登录的 Codex CLI。
+需要 Python 3.11 或更高版本，以及已经登录的 Codex。脚本会先从系统命令路径查找 Codex CLI；在 Windows 上也会自动查找 Codex 桌面应用自带的 CLI。
 
 ```powershell
 python -m venv .venv
