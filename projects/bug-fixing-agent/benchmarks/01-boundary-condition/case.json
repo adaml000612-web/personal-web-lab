@@ -1,0 +1,1 @@
+{"name":"empty average","bug_type":"boundary condition","test_command":"python check_case.py"}

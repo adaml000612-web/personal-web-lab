@@ -1,0 +1,1 @@
+{"name":"stale preference cache","bug_type":"cache invalidation","test_command":"python check_case.py"}

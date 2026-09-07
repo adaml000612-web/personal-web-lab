@@ -1,0 +1,1 @@
+{"name":"partial profile","bug_type":"missing JSON field","test_command":"python check_case.py"}
