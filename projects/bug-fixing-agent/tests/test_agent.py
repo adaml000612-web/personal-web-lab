@@ -18,6 +18,12 @@ def test_require_clean_git_repo_rejects_non_repository(tmp_path: Path) -> None:
         agent.require_clean_git_repo(tmp_path)
 
 
+def test_find_codex_binary_uses_path_first(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(agent.shutil, "which", lambda name: "C:/tools/codex.exe")
+
+    assert agent.find_codex_binary() == "C:/tools/codex.exe"
+
+
 def test_run_agent_stops_when_tests_already_pass(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

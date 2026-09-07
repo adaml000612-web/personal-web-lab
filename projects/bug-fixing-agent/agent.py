@@ -67,6 +67,26 @@ def build_fix_prompt(test_command: str, failure_output: str) -> str:
 """
 
 
+def find_codex_binary() -> str | None:
+    """Find Codex on PATH or inside the Windows desktop app installation."""
+    on_path = shutil.which("codex")
+    if on_path:
+        return on_path
+
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if os.name == "nt" and local_app_data:
+        bin_root = Path(local_app_data) / "OpenAI" / "Codex" / "bin"
+        candidates = sorted(
+            bin_root.glob("*/codex.exe"),
+            key=lambda path: path.stat().st_mtime,
+            reverse=True,
+        )
+        if candidates:
+            return str(candidates[0])
+
+    return None
+
+
 def run_agent(project: Path, test_command: str, codex_binary: str | None = None) -> int:
     """Execute one test-fix-test cycle and return a process-style status code."""
     project = project.expanduser().resolve()
@@ -82,7 +102,7 @@ def run_agent(project: Path, test_command: str, codex_binary: str | None = None)
         print("测试已经通过，无需修改。")
         return 0
 
-    executable = codex_binary or shutil.which("codex")
+    executable = codex_binary or find_codex_binary()
     if not executable:
         raise RuntimeError("未找到 Codex CLI，请先安装并登录。")
 
