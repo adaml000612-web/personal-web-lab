@@ -33,4 +33,16 @@ Write for a learner without removing technical precision. Define technical terms
 5. Dual review: product judgment and architecture judgment, including material weaknesses.
 6. Future direction: prioritized next steps, expected benefit, cost or difficulty, and recommended next upgrade.
 
+## Interview readiness
+
+Connect every upgrade to relevant AI Agent, Python, Git, testing, system design, and product sense interviews. Add:
+
+- a concise project story the user can tell using problem, decision, implementation, evidence, and reflection;
+- likely interviewer questions at basic, intermediate, and advanced levels, with answer points grounded in this repository;
+- one concrete code or benchmark example that supports each major claim;
+- tradeoffs and failure lessons, including what alternative was considered and why it was not selected;
+- concepts the user should be able to explain independently, plus a short practice task or mock question when useful.
+
+Do not invent production scale, user adoption, performance, or reliability claims. Clearly label personal-project evidence and explain how the design would need to change in production.
+
 Do not call an upgrade complete until appropriate tests pass, the measured evidence is recorded, and the review above is delivered to the user. If validation fails, report the failure and the remaining work instead of describing the version as complete.
