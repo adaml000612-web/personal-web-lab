@@ -1,0 +1,36 @@
+---
+description: Require a product and architecture review after every Bug Fixing Agent upgrade
+globs: projects/bug-fixing-agent/**
+alwaysApply: false
+---
+
+# Bug Fixing Agent Upgrade Review
+
+After completing each project upgrade, review the resulting version from both perspectives below before reporting completion.
+
+## Product manager review
+
+- State the user problem and why this upgrade is worth building now.
+- Explain the observable user capability added or improved.
+- Identify the target user, normal workflow, success measure, and remaining limitation.
+- Distinguish measured results from expectations and avoid presenting retries as first-pass success.
+
+## Agent architecture review
+
+- Explain the execution flow, boundaries, failure handling, observability, and validation.
+- Name the important tools, libraries, commands, and external services used, plus why each was selected.
+- Review safety, reproducibility, maintainability, extensibility, cost, and performance tradeoffs.
+- Verify that the implementation matches the documented behavior and that tests exercise meaningful risks.
+
+## Required upgrade report
+
+Write for a learner without removing technical precision. Define technical terms on first use and use a concrete example when an abstraction may be hard to understand. Lead with the outcome, then cover:
+
+1. Design purpose: the problem, user value, and reason for the chosen priority.
+2. Implemented functions: what the user can now do and the end-to-end flow.
+3. Tools used: what each important tool does in this project and why it is needed.
+4. Changes made: important files or modules, the before-and-after behavior, and validation evidence.
+5. Dual review: product judgment and architecture judgment, including material weaknesses.
+6. Future direction: prioritized next steps, expected benefit, cost or difficulty, and recommended next upgrade.
+
+Do not call an upgrade complete until appropriate tests pass, the measured evidence is recorded, and the review above is delivered to the user. If validation fails, report the failure and the remaining work instead of describing the version as complete.
