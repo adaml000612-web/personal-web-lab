@@ -4,12 +4,56 @@
 
 这是一个用 Python 编排本机 Codex CLI 的可评测原型。它不会直接修改原项目，而是在临时 Git worktree 中完成测试、修复和回归测试，最后保存 JSON 报告与补丁供人工审查。
 
+## 入门闭环与本次收尾（2026-09-15）
+
+参考学习对话《搭建 Agent 项目骨架》中，最初完成的是 Python + DeepSeek 的最小 Coding Agent。学习者已反馈看到 `Bug fixed successfully`。本次整理日期为 2026-09-15；缓存对话没有原始学习日期与完整源码，因此不把这一天写成原始实验日期，也不宣称本次重新跑通了 DeepSeek。
+
+入门流程：
+
+1. **运行 pytest（Observe）**：收集退出码、标准输出和错误输出；加法误写成减法时，`add(2, 3)` 得到 `-1`，测试预期为 `5`。
+2. **读取源码**：将相关实现与失败测试信息提供给模型。
+3. **调用 DeepSeek LLM 分析（Reason）**：根据测试失败定位原因，并生成候选修复代码。
+4. **备份原文件（Act）**：写回前保存原始内容，保留回滚依据。
+5. **自动写回修复代码（Act）**：由 Python 执行实际文件修改。
+6. **重新运行 pytest（Verify）**：使用外部测试验证候选修改。
+7. **失败回滚 / 成功提示**：再次测试失败则恢复备份；通过则输出 `Bug fixed successfully`。模型声称修好了不能替代测试结果。
+
+这是入门设计与学习成果记录。当前仓库中的 `agent.py` 已演进为调用 **Codex CLI**、在临时 Git worktree 中修复、输出报告与补丁的版本。它没有 DeepSeek 调用，也不在原项目中执行上述备份与写回；隔离副本承担保护原项目的职责。原始 DeepSeek `agent.py` 与 `demo_project/calculator.py` 在本次检查的 Documents、Desktop、Downloads 与 D 盘 Documents 范围内未找到，不补造历史源码、不覆盖现有版本。
+
+### 关键概念
+
+- **LLM**：根据上下文生成分析与代码的模型；可能生成不存在的函数或错误接口。
+- **Agent**：Python 把观察、模型推理、工具执行与结果验证连接起来，使模型输出产生实际动作。
+- **Observe → Reason → Act → Verify**：失败测试 → 根因与候选修复 → 备份和写入 → 再次测试。
+- **测试是外部验证**：通过只说明当前测试覆盖的行为符合预期，不代表全部代码正确。应保护测试，防止通过修改测试掩盖 Bug。
+
+### 入门排错记录
+
+| 现象 | 原因与处理 |
+| --- | --- |
+| pytest 收集到 0 tests | 测试文件实际是 `.txt`（如 `test_calculator.py.txt`），或不符合发现命名规则；显示文件扩展名并改成 `test_*.py`，再检查收集结果。 |
+| `read_file` 未定义 | 使用了尚未定义或导入的辅助函数；先实现文件读取函数，确认名称一致。 |
+| `No module named dotenv` | 当前 Python 环境未安装 `python-dotenv`；在入门项目的同一环境安装该包，导入名为 `dotenv`。 |
+| DeepSeek key 未读取 | 本地配置文件名错误（例如 `.env.txt`）；确认实际名称为 `.env`、加载路径正确、变量名与代码一致。 |
+| `chat.responses` 接口错误 | 将不同 API 的调用层级混用；原入门方案使用 OpenAI 兼容客户端的 `client.chat.completions.create(...)`。具体配置以原版本及服务文档为准。 |
+| PowerShell `ParserError / Missing argument in parameter list` | 在终端输入了 Python 多变量赋值；将 `new_code, new_stdout, new_stderr = run_tests()` 写入 `agent.py` 的 `main()`，终端执行 `python agent.py`。 |
+| `assert -1 == 5` | pytest 已正常执行，实现仍是减法；这是实际 Bug，不是终端或测试安装失败。 |
+
+### 凭证保护与验证范围
+
+项目 `.gitignore` 明确忽略 `.env`、`.env.*`、`.venv/`、`__pycache__/` 和 `.pytest_cache/`。`.env.example` 仅允许占位示例，真实 key 只保留本地；已被 Git 跟踪的文件不会因新增忽略规则而自动取消跟踪，因此提交前同时检查跟踪列表与待提交内容。
+
+当前版本只依赖 `requirements.txt` 中的 pytest 与已登录的 Codex CLI，无需为本次文档收尾增加 DeepSeek 或 dotenv 依赖。下面的使用说明适用于当前 Codex 版本。历史 3/5 基准成绩与人工重试结果保留原日期，不算本次重新测得的成绩。
+
+下一步：先保存能找回的原始入门源码；再逐项考虑自动选文件、修改范围约束、最多 3 次尝试、逐轮测试日志与最终修复报告。当前版本已有部分范围约束和报告能力，自动重试仍待实现。
+
 ## 项目结构
 
 ```text
 bug-fixing-agent/
 ├─ agent.py                 # 单次隔离修复
 ├─ benchmark.py             # 批量评测
+├─ inspect_project.py       # 只读问题检查
 ├─ requirements.txt
 ├─ benchmarks/              # 五类可复现 Bug
 └─ tests/                   # Agent 自身测试
