@@ -5,3 +5,7 @@ __pycache__/
 runs/
 benchmark-results/
 
+# Local credentials (never commit real API keys)
+.env
+.env.*
+!.env.example
