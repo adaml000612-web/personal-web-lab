@@ -7,10 +7,13 @@ import json
 import subprocess
 import sys
 import tempfile
+import time
+import uuid
 from pathlib import Path
 from typing import Sequence
 
 from agent import find_codex_binary
+from operation_log import OperationLogger
 
 
 OUTPUT_SCHEMA = {
@@ -39,54 +42,81 @@ INSPECTION_PROMPT = """只读检查当前项目，找出一个明确、可验证
 """
 
 
-def inspect_project(project: Path, codex_binary: str | None = None) -> dict[str, object]:
+def inspect_project(
+    project: Path,
+    codex_binary: str | None = None,
+    log_file: Path | None = None,
+) -> dict[str, object]:
+    started = time.monotonic()
     project = project.expanduser().resolve()
     if not project.is_dir():
         raise ValueError(f"项目目录不存在：{project}")
     executable = codex_binary or find_codex_binary()
     if not executable:
         raise RuntimeError("未找到 Codex CLI，请先安装并登录。")
+    logger = OperationLogger(uuid.uuid4().hex, project, "inspection", log_file)
+    logger.write("run_started", "started")
 
-    with tempfile.TemporaryDirectory(prefix="project-inspection-") as temporary:
-        temporary_path = Path(temporary)
-        schema_path = temporary_path / "issue-schema.json"
-        result_path = temporary_path / "issue.json"
-        schema_path.write_text(
-            json.dumps(OUTPUT_SCHEMA, ensure_ascii=False), encoding="utf-8"
+    try:
+        with tempfile.TemporaryDirectory(prefix="project-inspection-") as temporary:
+            temporary_path = Path(temporary)
+            schema_path = temporary_path / "issue-schema.json"
+            result_path = temporary_path / "issue.json"
+            schema_path.write_text(
+                json.dumps(OUTPUT_SCHEMA, ensure_ascii=False), encoding="utf-8"
+            )
+            completed = subprocess.run(
+                [
+                    executable,
+                    "exec",
+                    "--ephemeral",
+                    "--sandbox",
+                    "read-only",
+                    "--skip-git-repo-check",
+                    "--cd",
+                    str(project),
+                    "--output-schema",
+                    str(schema_path),
+                    "--output-last-message",
+                    str(result_path),
+                    INSPECTION_PROMPT,
+                ],
+                cwd=project,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+            )
+            logger.write(
+                "codex_completed",
+                "passed" if completed.returncode == 0 else "failed",
+                returncode=completed.returncode,
+            )
+            if completed.returncode != 0:
+                detail = (completed.stderr or completed.stdout).strip()[-1000:]
+                raise RuntimeError(f"Codex 检查失败：{detail}")
+            if not result_path.exists():
+                raise RuntimeError("Codex 没有返回检查结果。")
+            try:
+                finding = json.loads(result_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as error:
+                raise RuntimeError("Codex 返回的检查结果不是有效 JSON。") from error
+            logger.write("result_parsed", "passed", issue_file=finding.get("file"))
+            logger.write(
+                "run_completed",
+                "passed",
+                duration_seconds=round(time.monotonic() - started, 3),
+            )
+            return finding
+    except Exception as error:
+        logger.write(
+            "run_completed",
+            "failed",
+            duration_seconds=round(time.monotonic() - started, 3),
+            error_type=type(error).__name__,
         )
-        completed = subprocess.run(
-            [
-                executable,
-                "exec",
-                "--ephemeral",
-                "--sandbox",
-                "read-only",
-                "--skip-git-repo-check",
-                "--cd",
-                str(project),
-                "--output-schema",
-                str(schema_path),
-                "--output-last-message",
-                str(result_path),
-                INSPECTION_PROMPT,
-            ],
-            cwd=project,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            check=False,
-        )
-        if completed.returncode != 0:
-            detail = (completed.stderr or completed.stdout).strip()[-1000:]
-            raise RuntimeError(f"Codex 检查失败：{detail}")
-        if not result_path.exists():
-            raise RuntimeError("Codex 没有返回检查结果。")
-        try:
-            finding = json.loads(result_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as error:
-            raise RuntimeError("Codex 返回的检查结果不是有效 JSON。") from error
-        return finding
+        raise
 
 
 def print_finding(finding: dict[str, object]) -> None:
@@ -99,13 +129,14 @@ def print_finding(finding: dict[str, object]) -> None:
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="读取项目并打印一个明确的代码问题。")
     parser.add_argument("project", type=Path, help="需要检查的项目目录")
+    parser.add_argument("--log-file", type=Path, help="JSONL 操作日志保存路径")
     return parser.parse_args(argv)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     try:
-        finding = inspect_project(args.project)
+        finding = inspect_project(args.project, log_file=args.log_file)
         print_finding(finding)
         return 0
     except (ValueError, RuntimeError) as error:
