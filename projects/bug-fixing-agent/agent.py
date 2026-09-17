@@ -17,6 +17,8 @@ from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 from typing import Iterator, Sequence
 
+from operation_log import OperationLogger
+
 
 @dataclass(frozen=True)
 class CommandResult:
@@ -178,6 +180,7 @@ def run_agent(
     codex_binary: str | None = None,
     report_dir: Path | None = None,
     max_changed_files: int = 8,
+    log_file: Path | None = None,
 ) -> int:
     started = time.monotonic()
     project = project.expanduser().resolve()
@@ -195,6 +198,8 @@ def run_agent(
         run_id=datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ"),
         project=str(project), test_command=test_command,
     )
+    logger = OperationLogger(report.run_id, project, "repair", log_file)
+    logger.write("run_started", "started")
     destination = report_dir or Path(__file__).resolve().parent / "runs"
     patch = ""
     exit_code = 1
@@ -203,6 +208,11 @@ def run_agent(
             print("[1/4] 在隔离 worktree 中运行测试……")
             initial = run_command(test_args, worktree)
             report.initial_test_returncode = initial.returncode
+            logger.write(
+                "initial_test_completed",
+                "passed" if initial.returncode == 0 else "failed",
+                returncode=initial.returncode,
+            )
             if initial.returncode == 0:
                 report.status, report.note, exit_code = (
                     "already_passing", "测试已经通过，无需修改。", 0
@@ -215,6 +225,12 @@ def run_agent(
             report.agent_output_tail = fix.output[-2000:]
             files = changed_files(worktree)
             report.changed_files = files
+            logger.write(
+                "codex_completed",
+                "passed" if fix.returncode == 0 else "failed",
+                returncode=fix.returncode,
+                changed_file_count=len(files),
+            )
             protected = [path for path in files if is_protected_test_file(path)]
             report.protected_files_modified = protected
             patch = run_command(["git", "diff", "--binary", "--no-ext-diff"], worktree).output
@@ -234,10 +250,16 @@ def run_agent(
                 report.note = f"Agent 修改了 {len(files)} 个文件，超过限制 {max_changed_files}。"
                 return exit_code
 
+            logger.write("policy_check_completed", "passed")
             print("[3/4] 检查测试文件和修改范围……通过")
             print("[4/4] 再次运行测试……")
             final = run_command(test_args, worktree)
             report.final_test_returncode = final.returncode
+            logger.write(
+                "final_test_completed",
+                "passed" if final.returncode == 0 else "failed",
+                returncode=final.returncode,
+            )
             if final.returncode != 0:
                 report.status, report.note = "tests_failed", "修改完成，但测试仍然失败。"
                 return exit_code
@@ -247,7 +269,16 @@ def run_agent(
             return exit_code
     finally:
         report.duration_seconds = round(time.monotonic() - started, 3)
+        if report.status == "started":
+            report.status = "failed"
+            report.note = "运行在完成前失败。"
         report_path = save_report(report, destination, patch)
+        logger.write(
+            "run_completed",
+            report.status,
+            duration_seconds=report.duration_seconds,
+            changed_file_count=len(report.changed_files or []),
+        )
         print(f"结果：{report.note}")
         print(f"报告：{report_path}")
         if report.patch_file:
@@ -262,6 +293,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--test-command", default="python -m pytest")
     parser.add_argument("--report-dir", type=Path, help="报告和补丁保存目录")
     parser.add_argument("--max-changed-files", type=int, default=8)
+    parser.add_argument("--log-file", type=Path, help="JSONL 操作日志保存路径")
     return parser.parse_args(argv)
 
 
@@ -270,7 +302,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         return run_agent(
             args.project, args.test_command, report_dir=args.report_dir,
-            max_changed_files=args.max_changed_files,
+            max_changed_files=args.max_changed_files, log_file=args.log_file,
         )
     except (ValueError, RuntimeError) as error:
         print(f"错误：{error}", file=sys.stderr)

@@ -60,6 +60,7 @@ def test_isolated_run_saves_patch_without_changing_original(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     repo, reports = tmp_path / "repo", tmp_path / "reports"
+    log_file = tmp_path / "operations.jsonl"
     make_repo(repo, {
         ".gitignore": "__pycache__/\n*.py[cod]\n",
         "value.py": "VALUE = 'bad'\n",
@@ -72,7 +73,8 @@ def test_isolated_run_saves_patch_without_changing_original(
 
     monkeypatch.setattr(agent, "invoke_codex", fake_codex)
     result = agent.run_agent(
-        repo, f'"{sys.executable}" check_case.py', codex_binary="codex", report_dir=reports
+        repo, f'"{sys.executable}" check_case.py', codex_binary="codex",
+        report_dir=reports, log_file=log_file,
     )
     assert result == 0
     assert (repo / "value.py").read_text(encoding="utf-8") == "VALUE = 'bad'\n"
@@ -80,6 +82,11 @@ def test_isolated_run_saves_patch_without_changing_original(
     assert report["status"] == "passed"
     assert report["changed_files"] == ["value.py"]
     assert next(reports.glob("*.patch")).read_text(encoding="utf-8")
+    events = [json.loads(line)["event"] for line in log_file.read_text(encoding="utf-8").splitlines()]
+    assert events == [
+        "run_started", "initial_test_completed", "codex_completed",
+        "policy_check_completed", "final_test_completed", "run_completed",
+    ]
 
 
 def test_rejects_agent_that_modifies_test(
@@ -98,7 +105,8 @@ def test_rejects_agent_that_modifies_test(
 
     monkeypatch.setattr(agent, "invoke_codex", fake_codex)
     result = agent.run_agent(
-        repo, f'"{sys.executable}" check_case.py', codex_binary="codex", report_dir=reports
+        repo, f'"{sys.executable}" check_case.py', codex_binary="codex",
+        report_dir=reports, log_file=tmp_path / "operations.jsonl",
     )
     assert result == 1
     report = json.loads(next(reports.glob("*.json")).read_text(encoding="utf-8"))

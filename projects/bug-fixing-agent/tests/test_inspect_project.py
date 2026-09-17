@@ -30,9 +30,21 @@ def test_inspect_project_reads_structured_codex_result(
         return type("Completed", (), {"returncode": 0, "stdout": "", "stderr": ""})()
 
     monkeypatch.setattr(inspect_project.subprocess, "run", fake_run)
-    finding = inspect_project.inspect_project(project, codex_binary="codex")
+    log_file = tmp_path / "operations.jsonl"
+    finding = inspect_project.inspect_project(
+        project, codex_binary="codex", log_file=log_file
+    )
     assert finding["file"] == "calculator.py"
     assert finding["line"] == 2
+    records = [json.loads(line) for line in log_file.read_text(encoding="utf-8").splitlines()]
+    assert [record["event"] for record in records] == [
+        "run_started",
+        "codex_completed",
+        "result_parsed",
+        "run_completed",
+    ]
+    assert len({record["run_id"] for record in records}) == 1
+    assert all("evidence" not in record for record in records)
 
 
 def test_print_finding_is_readable(capsys: pytest.CaptureFixture[str]) -> None:
