@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f4f7fb">
+  <meta name="description" content="6 周 AI/Agent 实习求职强化学习打卡计划">
+  <title>AI / Agent 实习强化计划</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232f6fed'/%3E%3Cpath d='M18 33l9 9 20-22' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <style>
+    :root{--bg:#f4f7fb;--panel:#fff;--ink:#172033;--muted:#667085;--line:#e3e9f2;--blue:#2f6fed;--blue-soft:#eaf1ff;--green:#16875f;--green-soft:#e8f7f0;--amber:#a35b00;--amber-soft:#fff4df;--shadow:0 12px 35px rgba(30,55,90,.08);--radius:18px}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;max-width:100%;overflow-x:hidden}body{margin:0;max-width:100%;overflow-x:hidden;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}button,input,textarea{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid rgba(47,111,237,.25);outline-offset:2px}
+    .shell{max-width:1240px;margin:auto;padding:24px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}.brand h1{font-size:clamp(1.35rem,2vw,1.8rem);margin:0;letter-spacing:-.03em}.brand p{margin:4px 0 0;color:var(--muted);font-size:.9rem}.reset{border:1px solid var(--line);background:var(--panel);border-radius:12px;padding:9px 13px;color:var(--muted)}
+    .layout{display:grid;grid-template-columns:245px minmax(0,1fr);gap:20px}.sidebar,.card{background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:var(--radius)}.sidebar{padding:14px;height:max-content;position:sticky;top:20px}.side-label{font-size:.75rem;font-weight:700;color:var(--muted);letter-spacing:.08em;padding:4px 8px 10px}.week-btn{width:100%;display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:10px;text-align:left;border:0;background:transparent;border-radius:13px;padding:10px 8px;margin:2px 0;color:var(--ink)}.week-btn:hover{background:#f5f8fc}.week-btn.active{background:var(--blue-soft);color:#174ea6}.week-num{height:32px;border-radius:10px;background:#eef2f7;display:grid;place-items:center;font-weight:750;font-size:.8rem}.week-btn.active .week-num{background:var(--blue);color:#fff}.week-text strong{display:block;font-size:.88rem}.week-text span{display:block;font-size:.72rem;color:var(--muted)}.week-pct{font-size:.75rem;color:var(--muted)}
+    .main{min-width:0}.view-tabs{display:flex;gap:6px;background:#e8edf5;border-radius:14px;padding:4px;width:max-content;margin-bottom:16px}.tab{border:0;background:transparent;border-radius:10px;padding:8px 18px;color:var(--muted);font-weight:650}.tab.active{background:var(--panel);color:var(--ink);box-shadow:0 2px 9px rgba(35,55,80,.1)}
+    .summary{display:grid;grid-template-columns:minmax(0,1.7fr) repeat(3,minmax(120px,.7fr));gap:12px;margin-bottom:16px}.card{padding:18px}.progress-card{display:flex;flex-direction:column;justify-content:center}.progress-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}.eyebrow{font-size:.76rem;color:var(--muted);font-weight:700;letter-spacing:.06em}.big{font-size:1.75rem;font-weight:780;letter-spacing:-.04em}.bar{height:8px;background:#edf1f6;border-radius:99px;overflow:hidden;margin-top:10px}.bar>i{display:block;height:100%;background:var(--blue);width:0;border-radius:inherit;transition:width .25s}.metric{display:flex;flex-direction:column;justify-content:center}.metric .value{font-size:1.5rem;font-weight:760;margin-top:2px}.metric .unit{font-size:.78rem;color:var(--muted)}
+    .notice{display:flex;align-items:flex-start;gap:12px;background:var(--amber-soft);border:1px solid #f0d8ab;color:#70420b;border-radius:15px;padding:13px 15px;margin-bottom:16px}.notice b{display:block}.notice span{font-size:.86rem}.notice-icon{font-size:1.2rem}
+    .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:4px 0 12px}.section-head h2{font-size:1.15rem;margin:0}.section-head p{margin:2px 0 0;color:var(--muted);font-size:.84rem}.date-jump{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:7px 10px;color:var(--muted);font-size:.85rem}
+    .day-list{display:grid;gap:12px}.day{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}.day.current{border-color:#89adf8;box-shadow:0 0 0 3px rgba(47,111,237,.08)}.day.done{border-color:#b8dfce}.day summary{list-style:none;display:grid;grid-template-columns:58px 1fr auto;align-items:center;gap:14px;padding:16px;cursor:pointer}.day summary::-webkit-details-marker{display:none}.datebox{border-right:1px solid var(--line);padding-right:12px;text-align:center}.datebox b{font-size:1.15rem;display:block;line-height:1.1}.datebox span{font-size:.73rem;color:var(--muted)}.day-title{min-width:0}.day-title strong{display:block}.day-title span{color:var(--muted);font-size:.82rem}.state{font-size:.78rem;font-weight:700;padding:5px 9px;border-radius:99px;background:#f1f4f8;color:var(--muted)}.done .state{background:var(--green-soft);color:var(--green)}.day-body{border-top:1px solid var(--line);padding:16px;background:#fbfcfe}.tasks{display:grid;gap:8px;margin-bottom:14px}.task{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--line);background:#fff;border-radius:12px}.task input{appearance:none;width:21px;height:21px;min-width:21px;border:2px solid #b6c0d0;border-radius:7px;margin:1px 0 0;display:grid;place-items:center}.task input:checked{background:var(--blue);border-color:var(--blue)}.task input:checked:after{content:"✓";color:white;font-size:.82rem;font-weight:900}.task label{cursor:pointer}.task label small{display:block;color:var(--muted);margin-top:2px}.task.fixed{background:#f5f8ff}.day-fields{display:grid;grid-template-columns:180px 1fr;gap:12px}.field label{display:block;font-size:.78rem;color:var(--muted);font-weight:650;margin-bottom:5px}.field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:11px;background:#fff;padding:10px 11px;color:var(--ink)}.field textarea{resize:vertical;min-height:72px}.minutes{position:relative}.minutes input{padding-right:45px}.minutes:after{content:"分钟";position:absolute;right:11px;bottom:10px;font-size:.76rem;color:var(--muted)}
+    .empty{padding:34px;text-align:center;color:var(--muted)}.today-hero{background:linear-gradient(135deg,#1e55bf,#3479ee);color:#fff;border:0}.today-hero .eyebrow{color:#dce8ff}.today-hero h2{margin:4px 0 2px;font-size:1.45rem}.today-hero p{margin:0;color:#dbe7ff}.today-hero.travel{background:linear-gradient(135deg,#815115,#b8771b)}
+    .bottom-nav{display:none}.desktop-only{display:block}
+    @media(max-width:900px){.shell{padding:18px}.layout{grid-template-columns:1fr}.sidebar{display:none}.summary{grid-template-columns:1.5fr 1fr 1fr}.summary .metric:last-child{display:none}}
+    @media(max-width:620px){body{padding-bottom:84px}.shell{padding:16px 14px 20px}.topbar{align-items:flex-start;flex-wrap:wrap;margin-bottom:18px}.brand{min-width:0;flex:1 1 260px}.brand h1{font-size:1.3rem}.brand p{font-size:.76rem}.reset{padding:7px 10px;font-size:.78rem;margin-left:auto}.summary{grid-template-columns:minmax(0,1fr) minmax(0,1fr);margin-bottom:12px}.progress-card{grid-column:1/-1}.progress-head{min-width:0}.progress-head .unit{white-space:nowrap}.card{padding:15px;min-width:0}.metric .value{font-size:1.3rem}.view-tabs{width:100%}.tab{flex:1;padding:9px 10px}.section-head{align-items:flex-start}.date-jump{display:none}.notice{min-width:0}.notice>div:last-child{min-width:0}.day summary{grid-template-columns:48px minmax(0,1fr) auto;gap:10px;padding:14px 12px}.datebox{padding-right:8px}.day-title strong{font-size:.92rem}.day-title span{font-size:.75rem}.state{padding:4px 7px;font-size:.7rem}.day-body{padding:12px}.day-fields{grid-template-columns:1fr}.bottom-nav{position:fixed;z-index:20;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:rgba(255,255,255,.94);border:1px solid var(--line);box-shadow:0 12px 40px rgba(20,40,70,.2);backdrop-filter:blur(14px);border-radius:17px;padding:6px}.bottom-nav button{border:0;background:transparent;border-radius:12px;padding:8px 4px;color:var(--muted);font-size:.74rem;font-weight:650}.bottom-nav button.active{background:var(--blue-soft);color:var(--blue)}.bottom-nav button span{display:block;font-size:1rem}.desktop-only{display:none}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand"><h1>AI / Agent 实习强化计划</h1><p>2026.09.18 — 11.04 · 旅行期间暂停正式学习</p></div>
+      <button class="reset" id="resetBtn" type="button">重置数据</button>
+    </header>
+    <div class="layout">
+      <aside class="sidebar" aria-label="周计划导航"><div class="side-label">6 周路线</div><div id="weekNav"></div></aside>
+      <main class="main">
+        <div class="view-tabs" role="tablist" aria-label="视图切换">
+          <button class="tab active" data-view="today" role="tab">今日</button>
+          <button class="tab" data-view="all" role="tab">全部计划</button>
+        </div>
+        <section class="summary" aria-label="学习进度">
+          <div class="card progress-card"><div class="progress-head"><div><div class="eyebrow">总进度</div><div class="big" id="totalPct">0%</div></div><span class="unit" id="taskCount">0 / 0 项</span></div><div class="bar"><i id="totalBar"></i></div></div>
+          <div class="card metric"><span class="eyebrow">完成天数</span><span class="value" id="doneDays">0</span><span class="unit">共 42 天</span></div>
+          <div class="card metric"><span class="eyebrow">连续打卡</span><span class="value" id="streak">0</span><span class="unit">天</span></div>
+          <div class="card metric"><span class="eyebrow">累计学习</span><span class="value" id="totalHours">0</span><span class="unit">小时</span></div>
+        </section>
+        <div class="notice"><div class="notice-icon">✈</div><div><b>新加坡旅行：9 月 30 日—10 月 5 日</b><span>这 6 天不安排正式开发学习，不补课、不计入连续打卡；10 月 6 日继续 W2。</span></div></div>
+        <div id="content"></div>
+      </main>
+    </div>
+  </div>
+  <nav class="bottom-nav" aria-label="手机端导航">
+    <button data-mobile="today" class="active"><span>⌂</span>今日</button>
+    <button data-mobile="all"><span>☷</span>计划</button>
+    <button data-mobile="current"><span>◎</span>当前周</button>
+  </nav>
+  <script>
+    const WEEKS=[
+      {title:'Python 基础',range:'09.18—09.24',days:[
+        ['开发环境与容器复习',['确认 Python / VS Code 环境可用','复习 list、dict、set、tuple，写 6 个小例子']],
+        ['函数与参数',['掌握参数、return、作用域','把重复代码重构成 3 个小函数']],
+        ['文件与 JSON',['使用 with 读写文本文件','完成 JSON 保存与读取小练习']],
+        ['异常处理',['练习 try / except / raise','为文件读取补上清晰错误提示']],
+        ['模块与虚拟环境',['理解 import、模块拆分','创建 venv 并记录依赖']],
+        ['综合练习',['完成数据读取—处理—输出的小程序','用自己的话说明程序流程']],
+        ['CLI Todo',['独立完成命令行 Todo 最小版','验证新增、查看、完成三条主流程']]
+      ]},
+      {title:'Git / pytest / API',range:'09.25—10.07',days:[
+        ['Git 基础',['练习 status、add、commit、log','完成一次小步提交并写清提交信息']],
+        ['分支与合并',['创建功能分支并完成一次合并','理解冲突产生原因，不要求刻意制造冲突']],
+        ['pytest 入门',['会写 test_xxx 与 assert','给已有函数补 5 个测试']],
+        ['测试失败定位',['阅读 pytest 失败信息','修复一个刻意设置的错误并重新验证']],
+        ['HTTP 与 JSON',['理解请求、响应、状态码','使用公开 API 完成一次 GET 请求']],
+        ['API 调用封装',['把 API 请求封装成函数','补上超时和异常处理']],
+        ['阶段小结',['整理 Git / pytest / API 知识卡','独立复现一次提交—测试—调用流程']]
+      ]},
+      {title:'LLM API + FastAPI',range:'10.08—10.14',days:[
+        ['LLM API 最小调用',['完成一次文本生成 API 调用','密钥只放环境变量，不写入源码']],
+        ['提示词与结构化输出',['比较两版提示词结果','让模型稳定返回指定 JSON 字段']],
+        ['FastAPI 起步',['运行第一个 FastAPI 应用','理解路由、请求与响应']],
+        ['GET / POST',['实现一个 GET 与一个 POST 接口','在自动文档中手动验证']],
+        ['Pydantic 与错误处理',['定义请求体模型','为非法输入返回清晰错误']],
+        ['实现 POST /chat',['串联请求体、LLM API 与 JSON 响应','加入超时与 API 异常处理']],
+        ['接口验收',['为核心接口写基础测试','从空环境按 README 复现一次']]
+      ]},
+      {title:'RAG',range:'10.15—10.21',days:[
+        ['理解 RAG',['画出检索—拼接—生成流程','说明 RAG 适合和不适合的问题']],
+        ['文本切分',['实现简单分段函数','比较两种切分长度的效果']],
+        ['向量与相似度',['理解 embedding 的用途','用小样本观察相似度排序']],
+        ['最小检索器',['保存若干文档片段','根据问题返回最相关片段']],
+        ['接入生成',['把检索结果放入提示词','让回答标注引用片段']],
+        ['评估与失败案例',['准备 5 个可核对问题','记录答错、检索错和资料缺失']],
+        ['Mini RAG 收尾',['整理运行说明与限制','完整演示提问—检索—回答链路']]
+      ]},
+      {title:'Agent + 重写项目',range:'10.22—10.28',days:[
+        ['Agent 基本循环',['理解 Observe—Reason—Act—Verify','用伪代码写出最小循环']],
+        ['工具调用',['实现一个受限的文件读取工具','明确路径和错误边界']],
+        ['项目现状审计',['梳理 Bug Fixing Agent 当前流程','列出本人能解释与暂不能解释的部分']],
+        ['最小重写：观察',['重写项目检查与上下文收集','保留可验证的输入输出']],
+        ['最小重写：行动',['实现受约束的修改步骤','避免无关文件和越界路径']],
+        ['最小重写：验证',['执行测试并区分运行、解析、结论状态','保留失败原因和超时信息']],
+        ['项目验收',['跑通一个成功和一个失败案例','整理架构图、限制与下一步']]
+      ]},
+      {title:'简历 / 面试 / 投递',range:'10.29—11.04',days:[
+        ['项目证据盘点',['为 3 个项目整理问题—行动—结果','区分 AI 辅助交付与个人掌握']],
+        ['简历定稿',['用可验证事实更新一页简历','删除无法在面试中解释的表述']],
+        ['项目讲述',['准备 1 分钟与 3 分钟项目介绍','录音复盘表达是否清楚']],
+        ['技术面试题',['练习 Python、Git、API、RAG、Agent 基础题','为不会的问题建立补缺清单']],
+        ['模拟面试',['完成一次 30 分钟模拟面试','记录追问和薄弱点']],
+        ['投递准备',['建立岗位表：公司、JD、时间、状态','针对 3 个岗位微调项目顺序']],
+        ['开始投递',['完成首批高匹配岗位投递','记录反馈；后续每周复盘一次']]
+      ]}
+    ];
+    const START=new Date(2026,8,18),TRAVEL_START=new Date(2026,8,30),TRAVEL_END=new Date(2026,9,5),KEY='aiInternshipTrackerV1';
+    const dates=[];let cursor=new Date(START);while(dates.length<42){if(cursor<TRAVEL_START||cursor>TRAVEL_END)dates.push(new Date(cursor));cursor.setDate(cursor.getDate()+1)}
+    const plan=WEEKS.flatMap((w,wi)=>w.days.map((d,di)=>({id:`w${wi}d${di}`,week:wi,date:dates[wi*7+di],title:d[0],tasks:[...d[1], '算法 30–40 分钟：做题、复盘并记录复杂度'],range:w.range})));
+    let data=load(),view='today',selectedWeek=currentWeekIndex();
+    function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch{return{}}}
+    function save(){localStorage.setItem(KEY,JSON.stringify(data));renderStats();renderWeekNav()}
+    function dayData(id){return data[id]||(data[id]={checks:[false,false,false],minutes:'',note:''})}
+    function fmt(d){return `${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`}
+    function weekday(d){return ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()]}
+    function today(){const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())}
+    function isTravel(d=today()){return d>=TRAVEL_START&&d<=TRAVEL_END}
+    function currentWeekIndex(){const t=today();if(t<dates[0])return 0;if(t>dates.at(-1))return 5;if(isTravel(t))return 1;const i=dates.findIndex(x=>+x===+t);return i<0?0:Math.floor(i/7)}
+    function isDone(item){const d=dayData(item.id);return d.checks.every(Boolean)}
+    function weekProgress(w){const items=plan.filter(x=>x.week===w),done=items.reduce((n,x)=>n+dayData(x.id).checks.filter(Boolean).length,0);return Math.round(done/(items.length*3)*100)}
+    function renderWeekNav(){document.querySelector('#weekNav').innerHTML=WEEKS.map((w,i)=>`<button class="week-btn ${selectedWeek===i?'active':''}" data-week="${i}"><span class="week-num">W${i+1}</span><span class="week-text"><strong>${w.title}</strong><span>${w.range}</span></span><span class="week-pct">${weekProgress(i)}%</span></button>`).join('')}
+    function renderStats(){const total=plan.length*3,done=plan.reduce((n,x)=>n+dayData(x.id).checks.filter(Boolean).length,0),doneCount=plan.filter(isDone).length,mins=plan.reduce((n,x)=>n+(Number(dayData(x.id).minutes)||0),0);let streak=0;for(const x of [...plan].sort((a,b)=>b.date-a.date)){if(x.date>today())continue;if(isDone(x))streak++;else break}const pct=Math.round(done/total*100);totalPct.textContent=pct+'%';totalBar.style.width=pct+'%';taskCount.textContent=`${done} / ${total} 项`;doneDays.textContent=doneCount;document.querySelector('#streak').textContent=streak;totalHours.textContent=(mins/60).toFixed(mins%60?1:0)}
+    function dayHTML(x,open=false){const d=dayData(x.id),done=isDone(x),cur=+x.date===+today();return `<details class="day ${done?'done':''} ${cur?'current':''}" data-id="${x.id}" ${open?'open':''}><summary><div class="datebox"><b>${String(x.date.getDate()).padStart(2,'0')}</b><span>${weekday(x.date)}</span></div><div class="day-title"><strong>${x.title}</strong><span>W${x.week+1} · ${WEEKS[x.week].title}</span></div><span class="state">${done?'已完成':d.checks.some(Boolean)?'进行中':'待开始'}</span></summary><div class="day-body"><div class="tasks">${x.tasks.map((t,i)=>`<div class="task ${i===2?'fixed':''}"><input type="checkbox" id="${x.id}-${i}" data-check="${i}" ${d.checks[i]?'checked':''}><label for="${x.id}-${i}">${t}${i===2?'<small>固定副任务；如果当天是休息日，可不补做。</small>':''}</label></div>`).join('')}</div><div class="day-fields"><div class="field minutes"><label for="min-${x.id}">学习时长</label><input id="min-${x.id}" inputmode="numeric" type="number" min="0" max="1440" data-minutes value="${d.minutes}" placeholder="例如 120"></div><div class="field"><label for="note-${x.id}">每日备注</label><textarea id="note-${x.id}" data-note placeholder="今天卡在哪里？明天先做什么？">${escapeHtml(d.note)}</textarea></div></div></div></details>`}
+    function escapeHtml(s=''){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+    function render(){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.view===view));document.querySelectorAll('[data-mobile]').forEach(b=>b.classList.toggle('active',b.dataset.mobile===view));if(view==='today')renderToday();else renderAll();renderStats();renderWeekNav()}
+    function renderToday(){const t=today(),item=plan.find(x=>+x.date===+t);if(isTravel(t)){content.innerHTML=`<section class="card today-hero travel"><div class="eyebrow">今日 · ${fmt(t)}</div><h2>旅行暂停日</h2><p>不安排正式开发学习，也不需要补进度。好好旅行，10 月 6 日再继续。</p></section>`;return}if(!item){const before=t<dates[0];content.innerHTML=`<section class="card today-hero"><div class="eyebrow">今日 · ${fmt(t)}</div><h2>${before?'计划尚未开始':'6 周计划已结束'}</h2><p>${before?'9 月 18 日开始第一天。':'进入持续投递与每周复盘阶段。'}</p></section>`;return}content.innerHTML=`<section class="card today-hero"><div class="eyebrow">今日任务 · ${fmt(t)} ${weekday(t)}</div><h2>${item.title}</h2><p>W${item.week+1} ${WEEKS[item.week].title} · 完成后记录时长和一句复盘</p></section><div style="height:12px"></div><div class="day-list">${dayHTML(item,true)}</div>`}
+    function renderAll(){const items=plan.filter(x=>x.week===selectedWeek);content.innerHTML=`<div class="section-head"><div><h2>W${selectedWeek+1} · ${WEEKS[selectedWeek].title}</h2><p>${WEEKS[selectedWeek].range} · 本周进度 ${weekProgress(selectedWeek)}%</p></div><button class="date-jump" id="todayJump">回到当前周</button></div><div class="day-list">${items.map(x=>dayHTML(x,+x.date===+today())).join('')}</div>`}
+    document.addEventListener('change',e=>{const box=e.target.closest('.day');if(!box)return;const d=dayData(box.dataset.id);if(e.target.matches('[data-check]'))d.checks[+e.target.dataset.check]=e.target.checked;if(e.target.matches('[data-minutes]'))d.minutes=e.target.value;save();if(e.target.matches('[data-check]'))render()});
+    document.addEventListener('input',e=>{const box=e.target.closest('.day');if(!box)return;const d=dayData(box.dataset.id);if(e.target.matches('[data-note]'))d.note=e.target.value;if(e.target.matches('[data-minutes]'))d.minutes=e.target.value;save()});
+    document.addEventListener('click',e=>{const tab=e.target.closest('[data-view]');if(tab){view=tab.dataset.view;render()}const week=e.target.closest('[data-week]');if(week){selectedWeek=+week.dataset.week;view='all';render()}const mobile=e.target.closest('[data-mobile]');if(mobile){if(mobile.dataset.mobile==='current'){selectedWeek=currentWeekIndex();view='all'}else view=mobile.dataset.mobile;render()}if(e.target.id==='todayJump'){selectedWeek=currentWeekIndex();render()}});
+    resetBtn.addEventListener('click',()=>{if(confirm('确定清空所有打卡、时长和备注吗？此操作无法撤销。')&&confirm('再次确认：要从零开始这份 6 周计划吗？')){localStorage.removeItem(KEY);data={};render()}});
+    render();
+  </script>
+</body>
+</html>
